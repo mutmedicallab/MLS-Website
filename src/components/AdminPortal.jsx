@@ -155,12 +155,24 @@ export default function AdminPortal() {
               className="flex items-center justify-between rounded-sm border border-ink/10 p-3 dark:border-dark-border"
             >
               <div>
-                <p className="text-sm font-semibold text-lab-900 dark:text-dark-ink">{app.full_name}</p>
-                <p className="text-xs text-ink-soft dark:text-dark-ink-soft">
-                  {app.email} · {app.year_of_study || "Year unknown"}
-                  {app.phone && ` · ${app.phone}`}
-                </p>
-              </div>
+  <p className="text-sm font-semibold text-lab-900 dark:text-dark-ink">{app.full_name}</p>
+  <p className="text-xs text-ink-soft dark:text-dark-ink-soft">
+    {app.email} · {app.year_of_study || "Year unknown"}
+    {app.phone && (
+      <>
+        {" · "}
+        
+          <a href={`https://wa.me/${app.phone.replace(/\D/g, "")}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-lab-700 underline dark:text-lab-500"
+        >
+          {app.phone}
+        </a>
+      </>
+    )}
+  </p>
+</div>
               <button
                 type="button"
                 onClick={() => confirmApplication(app)}
