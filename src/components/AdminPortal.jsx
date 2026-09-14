@@ -4,6 +4,21 @@ import { API_BASE_URL } from "../config/api";
 const CURRENT_PERIOD = { academicYear: "2026/2027", semester: "Sem 1" };
 const YEAR_ORDER = ["Y1", "Y2", "Y3", "Y4"];
 
+// Normalizes a Kenyan phone number into the international format WhatsApp
+// needs: strips non-digits, then converts a leading 0 to 254 if present.
+function toWhatsAppNumber(phone) {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.startsWith("0")) {
+    return "254" + digits.slice(1);
+  }
+  if (digits.startsWith("254")) {
+    return digits;
+  }
+  // Already has some other country code, or is unusually formatted —
+  // pass through as-is rather than guessing further.
+  return digits;
+}
+
 export default function AdminPortal() {
   const [password, setPassword] = useState("");
   const [authed, setAuthed] = useState(false);
@@ -155,24 +170,24 @@ export default function AdminPortal() {
               className="flex items-center justify-between rounded-sm border border-ink/10 p-3 dark:border-dark-border"
             >
               <div>
-  <p className="text-sm font-semibold text-lab-900 dark:text-dark-ink">{app.full_name}</p>
-  <p className="text-xs text-ink-soft dark:text-dark-ink-soft">
-    {app.email} · {app.year_of_study || "Year unknown"}
-    {app.phone && (
-      <>
-        {" · "}
-        
-          <a href={`https://wa.me/${app.phone.replace(/\D/g, "")}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-lab-700 underline dark:text-lab-500"
-        >
-          {app.phone}
-        </a>
-      </>
-    )}
-  </p>
-</div>
+                <p className="text-sm font-semibold text-lab-900 dark:text-dark-ink">{app.full_name}</p>
+                <p className="text-xs text-ink-soft dark:text-dark-ink-soft">
+                  {app.email} · {app.year_of_study || "Year unknown"}
+                  {app.phone && (
+                    <>
+                      {" · "}
+                      <a
+                        href={`https://wa.me/${toWhatsAppNumber(app.phone)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-lab-700 underline dark:text-lab-500"
+                      >
+                        {app.phone}
+                      </a>
+                    </>
+                  )}
+                </p>
+              </div>
               <button
                 type="button"
                 onClick={() => confirmApplication(app)}
@@ -249,7 +264,7 @@ function MemberYearGroup({ label, members, onToggleRegistration, onTogglePayment
                   <>
                     {" · "}
                     
-                      <a href={`https://wa.me/${m.phone.replace(/\D/g, "")}`}
+                     <a  href={`https://wa.me/${toWhatsAppNumber(m.phone)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-lab-700 underline dark:text-lab-500"
