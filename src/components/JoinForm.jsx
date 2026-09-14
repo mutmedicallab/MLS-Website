@@ -71,7 +71,7 @@ export default function JoinForm() {
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <YearSelect value={form.yearOfStudy} onChange={handleChange} />
-        <Field label="Phone (optional)" name="phone" value={form.phone} onChange={handleChange} />
+        <Field label="Phone (optional)" name="phone" value={form.phone} onChange={handleChange} required/>
       </div>
       <div>
         <label className="label-tag mb-1.5 block text-paper/70" htmlFor="message">
