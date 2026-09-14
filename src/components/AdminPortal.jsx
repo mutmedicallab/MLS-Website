@@ -158,6 +158,7 @@ export default function AdminPortal() {
                 <p className="text-sm font-semibold text-lab-900 dark:text-dark-ink">{app.full_name}</p>
                 <p className="text-xs text-ink-soft dark:text-dark-ink-soft">
                   {app.email} · {app.year_of_study || "Year unknown"}
+                  {app.phone && ` · ${app.phone}`}
                 </p>
               </div>
               <button
@@ -229,26 +230,24 @@ function MemberYearGroup({ label, members, onToggleRegistration, onTogglePayment
             className="flex flex-col gap-2 rounded-sm border border-ink/10 p-3 dark:border-dark-border sm:flex-row sm:items-center sm:justify-between"
           >
             <div>
-              <div>
-    </div>
-  <p className="text-sm font-semibold text-lab-900 dark:text-dark-ink">{m.full_name}</p>
-  <p className="text-xs text-ink-soft dark:text-dark-ink-soft">
-    {m.year_of_study || "Year unknown"}
-    {m.phone && (
-      <>
-        {" · "}
-        
-          <a href={`https://wa.me/${m.phone.replace(/\D/g, "")}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-lab-700 underline dark:text-lab-500"
-        >
-          {m.phone}
-        </a>
-      </>
-    )}
-  </p>
-</div>
+              <p className="text-sm font-semibold text-lab-900 dark:text-dark-ink">{m.full_name}</p>
+              <p className="text-xs text-ink-soft dark:text-dark-ink-soft">
+                {m.year_of_study || "Year unknown"}
+                {m.phone && (
+                  <>
+                    {" · "}
+                    
+                      <a href={`https://wa.me/${m.phone.replace(/\D/g, "")}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-lab-700 underline dark:text-lab-500"
+                    >
+                      {m.phone}
+                    </a>
+                  </>
+                )}
+              </p>
+            </div>
             <div className="flex gap-2">
               <button
                 type="button"
