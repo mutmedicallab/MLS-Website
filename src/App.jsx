@@ -58,7 +58,7 @@ export default function App() {
         <Reveal>
         <Join />
        </Reveal>
-        
+        <AdminPortal/>
       </main>
       <Footer />
       <ChatWidget />
