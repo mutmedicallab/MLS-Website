@@ -17,6 +17,7 @@ import useDarkMode from "./hooks/useDarkMode";
 import ChatWidget from "./components/ChatWidget";
 import AdminPortal from "./components/AdminPortal";
 import Alumni from "./components/Alumni";
+import Newsletter from "./components/Newsletter";
 
 export default function App() {
   const [dark, setDark] = useDarkMode();
@@ -53,6 +54,10 @@ export default function App() {
         </Reveal>
         <Alumni />
         <Committee />
+        <Newsletter />
+        <Reveal>
+        <Join />
+       </Reveal>
         <Reveal>
           <Join />
         </Reveal>

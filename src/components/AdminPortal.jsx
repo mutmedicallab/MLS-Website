@@ -23,6 +23,7 @@ export default function AdminPortal() {
   const [password, setPassword] = useState("");
   const [authed, setAuthed] = useState(false);
   const [error, setError] = useState("");
+  const [subscribers, setSubscribers] = useState([]);
 
   const [applications, setApplications] = useState([]);
   const [members, setMembers] = useState([]);
@@ -44,28 +45,30 @@ export default function AdminPortal() {
   }
 
   async function loadData() {
-    setLoading(true);
-    setError("");
-    try {
-      const [appsRes, membersRes] = await Promise.all([
-        authedFetch("/api/admin/members/pending-applications"),
-        authedFetch(
-          `/api/admin/members?academicYear=${encodeURIComponent(CURRENT_PERIOD.academicYear)}&semester=${encodeURIComponent(CURRENT_PERIOD.semester)}`
-        ),
-      ]);
-      const appsData = await appsRes.json();
-      const membersData = await membersRes.json();
-      setApplications(appsData.applications || []);
-      setMembers(membersData.members || []);
-      setAuthed(true);
-    } catch (err) {
-      setError(err.message || "Failed to load data.");
-      setAuthed(false);
-    } finally {
-      setLoading(false);
-    }
+  setLoading(true);
+  setError("");
+  try {
+    const [appsRes, membersRes, subsRes] = await Promise.all([
+      authedFetch("/api/admin/members/pending-applications"),
+      authedFetch(
+        `/api/admin/members?academicYear=${encodeURIComponent(CURRENT_PERIOD.academicYear)}&semester=${encodeURIComponent(CURRENT_PERIOD.semester)}`
+      ),
+      authedFetch("/api/newsletter"),
+    ]);
+    const appsData = await appsRes.json();
+    const membersData = await membersRes.json();
+    const subsData = await subsRes.json();
+    setApplications(appsData.applications || []);
+    setMembers(membersData.members || []);
+    setSubscribers(subsData.subscribers || []);
+    setAuthed(true);
+  } catch (err) {
+    setError(err.message || "Failed to load data.");
+    setAuthed(false);
+  } finally {
+    setLoading(false);
   }
-
+}
   async function confirmApplication(app) {
     if (confirmingId) return;
     setConfirmingId(app.id);
@@ -302,6 +305,32 @@ function MemberYearGroup({ label, members, onToggleRegistration, onTogglePayment
           </div>
         ))}
       </div>
+      <section className="mt-10">
+  <h2 className="font-display text-lg font-semibold text-lab-900 dark:text-dark-ink">
+    Newsletter Subscribers ({subscribers.length})
+  </h2>
+  <button
+    type="button"
+    onClick={() => {
+      const emails = subscribers.map((s) => s.email).join(", ");
+      navigator.clipboard.writeText(emails);
+      alert("All subscriber emails copied — paste into Gmail's BCC field.");
+    }}
+    className="mt-3 rounded-sm bg-lab-800 px-4 py-2 text-sm font-semibold text-paper dark:bg-lab-600"
+  >
+    Copy all emails
+  </button>
+  <div className="mt-3 space-y-1">
+    {subscribers.length === 0 && (
+      <p className="text-sm text-ink-soft dark:text-dark-ink-soft">No subscribers yet.</p>
+    )}
+    {subscribers.map((s) => (
+      <p key={s.id} className="text-xs text-ink-soft dark:text-dark-ink-soft">
+        {s.full_name ? `${s.full_name} — ` : ""}{s.email}
+      </p>
+    ))}
+  </div>
+</section>
     </div>
   );
 }
