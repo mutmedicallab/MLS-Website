@@ -258,6 +258,18 @@ export default function AdminPortal() {
         >
           Copy all emails
         </button>
+        <button
+  type="button"
+  onClick={async () => {
+    const res = await authedFetch("/api/newsletter/backfill", { method: "POST" });
+    const data = await res.json();
+    alert(`Added ${data.added} new subscribers from your members list.`);
+    loadData();
+  }}
+  className="ml-2 mt-3 rounded-sm border border-lab-700 px-4 py-2 text-sm font-semibold text-lab-700 dark:border-lab-500 dark:text-lab-500"
+>
+  Add all members to list
+</button>
         <div className="mt-3 space-y-1">
           {subscribers.length === 0 && (
             <p className="text-sm text-ink-soft dark:text-dark-ink-soft">No subscribers yet.</p>
