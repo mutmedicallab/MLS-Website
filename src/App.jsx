@@ -7,17 +7,18 @@ import Hero from "./components/Hero";
 import About from "./components/About";
 import Focus from "./components/Focus";
 import Cohorts from "./components/Cohorts";
+import CurrentStudents from "./components/CurrentStudents";
 import Events from "./components/Events";
 import Moments from "./components/Moments";
+import Alumni from "./components/Alumni";
 import Committee from "./components/Committee";
+import Newsletter from "./components/Newsletter";
 import Join from "./components/Join";
 import Footer from "./components/Footer";
 import Reveal from "./components/Reveal";
 import useDarkMode from "./hooks/useDarkMode";
 import ChatWidget from "./components/ChatWidget";
 import AdminPortal from "./components/AdminPortal";
-import Alumni from "./components/Alumni";
-import Newsletter from "./components/Newsletter";
 
 export default function App() {
   const [dark, setDark] = useDarkMode();
@@ -52,13 +53,17 @@ export default function App() {
         <Reveal>
           <Moments />
         </Reveal>
-        <Alumni />
+        <Reveal>
+          <Alumni />
+        </Reveal>
+        <Reveal>
+          <CurrentStudents />
+        </Reveal>
         <Committee />
         <Newsletter />
         <Reveal>
-        <Join />
-       </Reveal>
-        
+          <Join />
+        </Reveal>
       </main>
       <Footer />
       <ChatWidget />
