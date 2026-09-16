@@ -271,6 +271,18 @@ export default function AdminPortal() {
           >
             Add all members to list
           </button>
+          <button
+           type="button"
+           onClick={async () => {
+            const res = await authedFetch("/api/newsletter/backfill-applications", { method: "POST" });
+            const data = await res.json();
+            alert(`Added ${data.added ?? 0} new subscribers from applications (including unconfirmed).`);
+            loadData();
+           }}
+           className="rounded-sm border border-lab-700 px-4 py-2 text-sm font-semibold text-lab-700 dark:border-lab-500 dark:text-lab-500"
+          >
+            Add all applicants to list
+          </button>
         </div>
         <div className="mt-3 space-y-1">
           {subscribers.length === 0 && (
