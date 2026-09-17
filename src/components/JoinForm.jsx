@@ -13,6 +13,7 @@ export default function JoinForm() {
   const [form, setForm] = useState(initialForm);
   const [status, setStatus] = useState("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  const [wasAlreadySubmitted, setWasAlreadySubmitted] = useState(false);
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -37,6 +38,7 @@ export default function JoinForm() {
         throw new Error(data.error || "Something went wrong. Please try again.");
       }
 
+      setWasAlreadySubmitted(Boolean(data.alreadySubmitted));
       setStatus("success");
       setForm(initialForm);
     } catch (err) {
@@ -48,13 +50,20 @@ export default function JoinForm() {
   if (status === "success") {
     return (
       <div className="rounded-sm border border-lab-500/40 bg-lab-800/60 p-6 text-center">
-        <p className="label-tag text-lab-500">Application received</p>
+        <p className="label-tag text-lab-500">
+          {wasAlreadySubmitted ? "Already on file" : "Application received"}
+        </p>
         <p className="mt-2 text-paper/80">
-          Thanks — we've got your details. A committee member will follow up soon.
+          {wasAlreadySubmitted
+            ? "We already have an application from this email — no need to resubmit. A committee member will be in touch."
+            : "Thanks — we've got your details. A committee member will follow up soon."}
         </p>
         <button
           type="button"
-          onClick={() => setStatus("idle")}
+          onClick={() => {
+            setStatus("idle");
+            setWasAlreadySubmitted(false);
+          }}
           className="label-tag mt-4 text-lab-500 underline underline-offset-4"
         >
           Submit another response
@@ -71,7 +80,7 @@ export default function JoinForm() {
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <YearSelect value={form.yearOfStudy} onChange={handleChange} />
-        <Field label="Phone" name="phone" value={form.phone} onChange={handleChange} required/>
+        <Field label="Phone" name="phone" value={form.phone} onChange={handleChange} required />
       </div>
       <div>
         <label className="label-tag mb-1.5 block text-paper/70" htmlFor="message">
