@@ -3,9 +3,10 @@ import AmbientField from "./AmbientField";
 const EVENTS = [
   { date: "01 Sep 2026", tag: "Freshers", title: "Welcome & Recruitment Drive", desc: "Meet the board, learn what MUTMLSA does, and sign up on the spot — first-years welcome." },
   { date: "07 Sep 2026", tag: "Meet the Tribe", title: "Together from the very first step", desc: "Welcome to day one—come meet your fellow classmates, find your community, and start this exciting journey together." },
-  { date: "19 Sep 2026", tag: "Academic Symposium", title: "Exploring New Frontiers", desc: "Uncovering the laboratory science and innovations shaping the future of medicine." },
+  //{ date: "19 Sep 2026", tag: "Academic Symposium", title: "Exploring New Frontiers", desc: "Uncovering the laboratory science and innovations shaping the future of medicine." },
   { date: "21 Sep 2026 - 27 Sep 2026", tag: "KeMelSa Blood Drive", title: "Saving Lives", desc: "Every drop counts, every donor matters." },
   { date: "10 Oct 2026", tag: "Team-Building Hike", title: "Details to be announced", desc: "Climbing higher, connecting closer." },
+  {date: "17 Oct 2026", tag: "InterClub Game night", title: "Interdisciplinary Fun", desc: "Get ready for a night of fun and  delights!"},
 ];
 
 export default function Events() {
