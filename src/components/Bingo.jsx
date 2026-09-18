@@ -63,24 +63,19 @@ export default function Bingo() {
   async function handleCreate(e) {
     e.preventDefault();
     if (!name.trim()) return;
-    
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/bingo`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name }),
-      });
-      const data = await res.json();
-      if (data.card) {
-        setCard(data.card);
-        localStorage.setItem("mutmlsa_bingo_card_id", data.card.id);
-        loadLeaderboard();
-      }
-    } catch (error) {
-      console.error("Backend server is offline:", error);
-      alert("Could not connect to the server. Please make sure the backend is running on port 4000.");
+    const res = await fetch(`${API_BASE_URL}/api/bingo`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    });
+    const data = await res.json();
+    if (data.card) {
+      setCard(data.card);
+      localStorage.setItem("mutmlsa_bingo_card_id", data.card.id);
+      loadLeaderboard();
     }
   }
+
   function openSquare(index) {
     if (index === 11) return; // free space
     setActiveSquare(index);
@@ -119,15 +114,9 @@ export default function Bingo() {
   async function handleFind(e) {
     e.preventDefault();
     if (!searchName.trim()) return;
-    
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/bingo/find?name=${encodeURIComponent(searchName)}`);
-      const data = await res.json();
-      setSearchResults(data.cards || []);
-    } catch (error) {
-      console.error("Backend server is offline:", error);
-      alert("Could not connect to the server to find your card.");
-    }
+    const res = await fetch(`${API_BASE_URL}/api/bingo/find?name=${encodeURIComponent(searchName)}`);
+    const data = await res.json();
+    setSearchResults(data.cards || []);
   }
 
   function selectFoundCard(foundCard) {
@@ -219,38 +208,25 @@ export default function Bingo() {
               Playing as {card.name} · {Object.keys(card.filled_squares).length}/25
             </p>
             <div className="mt-4 grid grid-cols-5 gap-1.5">
-              <div className="mt-4 grid grid-cols-5 gap-1.5">
-
-  </div>
-  {SQUARES.map((sq, i) => {
-    const filledName = card.filled_squares[i];
-    const isFree = i === 11;
-    return (
-      <button
-        key={i}
-        type="button"
-        onClick={() => openSquare(i)}
-        className={`aspect-square flex flex-col justify-between rounded-sm border p-1 transition-colors ${
-          filledName || isFree
-            ? "border-lab-600 bg-lab-600 text-paper"
-            : "border-ink/10 bg-lab-50/50 text-ink-soft dark:border-dark-border dark:bg-dark-surface/40 dark:text-dark-ink-soft"
-        }`}
-      >
-        {/* The Prompt / Question */}
-        <span className="text-[8px] font-medium leading-tight sm:text-[9px] line-clamp-3 text-left w-full">
-          {isFree ? "FREE SPACE" : sq}
-        </span>
-
-        {/* The Filled Name (Only shows up if someone's name is recorded) */}
-        {filledName && (
-          <span className="mt-1 w-full truncate border-t border-paper/20 pt-0.5 text-center text-[7px] font-bold uppercase tracking-wider text-paper/90">
-            {filledName}
-          </span>
-        )}
-      </button>
-    );
-  })}
-</div>
+              {SQUARES.map((sq, i) => {
+                const filledName = card.filled_squares[i];
+                const isFree = i === 11;
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => openSquare(i)}
+                    className={`aspect-square rounded-sm border p-1 text-[8px] leading-tight transition-colors sm:text-[9px] ${
+                      filledName || isFree
+                        ? "border-lab-600 bg-lab-600 text-paper"
+                        : "border-ink/10 bg-lab-50/50 text-ink-soft dark:border-dark-border dark:bg-dark-surface/40 dark:text-dark-ink-soft"
+                    }`}
+                  >
+                    {isFree ? "FREE" : filledName ? filledName : sq}
+                  </button>
+                );
+              })}
+            </div>
 
             {activeSquare !== null && (
               <div className="fixed inset-0 z-[100] flex items-center justify-center bg-lab-900/80 p-5">
