@@ -62,7 +62,7 @@ export default function ChatWidget() {
         onClick={() => setOpen((v) => !v)}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
-        className="fixed bottom-5 right-5 z-[90] flex h-14 w-14 items-center justify-center rounded-full bg-coral-500 text-paper shadow-lg"
+        className="fixed bottom-24 right-5 z-[90] flex h-14 w-14 items-center justify-center rounded-full bg-coral-500 text-paper shadow-lg"
         aria-label={open ? "Close chat" : "Open chat"}
       >
         {open ? <CloseIcon /> : <ChatIcon />}
@@ -75,7 +75,7 @@ export default function ChatWidget() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="fixed bottom-24 right-5 z-[90] flex h-[28rem] w-[22rem] max-w-[calc(100vw-2.5rem)] flex-col overflow-hidden rounded-sm border border-ink/10 bg-paper shadow-2xl dark:border-dark-border dark:bg-dark-bg"
+            className="fixed bottom-40 right-5 z-[90] flex h-[28rem] w-[22rem] max-w-[calc(100vw-2.5rem)] flex-col overflow-hidden rounded-sm border border-ink/10 bg-paper shadow-2xl dark:border-dark-border dark:bg-dark-bg"
           >
             <div className="flex items-center gap-2.5 border-b border-ink/10 bg-lab-900 px-4 py-3 dark:border-dark-border">
               <div className="flex h-7 w-7 items-center justify-center rounded-full bg-coral-500 text-paper">
