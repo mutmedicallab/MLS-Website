@@ -42,10 +42,9 @@ export default function App() {
   return (
     <div className="min-h-screen bg-paper text-ink dark:bg-dark-bg dark:text-dark-ink">
       <TopBar />
-{activeTab === "home" && <Navbar dark={dark} setDark={setDark} />}
-<TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
+      {activeTab === "home" && <Navbar dark={dark} setDark={setDark} />}
 
-      <main>
+      <main className="pb-20"> {/* pb-20 reserves space so content isn't hidden behind the fixed bottom bar */}
         {activeTab === "home" && (
           <>
             <Hero />
@@ -90,6 +89,7 @@ export default function App() {
 
       <Footer />
       <ChatWidget />
+      <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
       <Analytics />
     </div>
   );

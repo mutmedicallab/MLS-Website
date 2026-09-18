@@ -1,31 +1,33 @@
+// components/TabBar.jsx
+import { Home, Archive, Star } from "lucide-react";
+
 const TABS = [
-  { key: "home", label: "Home" },
-  { key: "archive", label: "Archive" },
-  { key: "get involved", label: "Get Involved" },
+  { key: "home", label: "Home", icon: Home },
+  { key: "archive", label: "Archive", icon: Archive },
+  { key: "get involved", label: "Get Involved", icon: Star },
 ];
 
 export default function TabBar({ activeTab, setActiveTab }) {
   return (
-    <div className="sticky top-[57px] z-40 border-b border-ink/10 bg-paper/95 backdrop-blur dark:border-dark-border dark:bg-dark-bg/95">
-      <div className="mx-auto flex max-w-6xl justify-center gap-2 px-5 py-2 md:justify-start md:gap-1 md:px-8 md:py-0">
-        {TABS.map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            onClick={() => {
-              setActiveTab(tab.key);
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }}
-            className={`label-tag flex-1 rounded-full px-4 py-2 text-center transition-colors md:flex-none md:rounded-none md:border-b-2 md:px-4 md:py-3 ${
-              activeTab === tab.key
-                ? "bg-lab-800 text-paper md:border-lab-600 md:bg-transparent md:text-lab-800 dark:md:border-lab-500 dark:md:text-dark-ink"
-                : "text-ink-soft hover:bg-lab-50 md:border-transparent md:hover:bg-transparent md:hover:text-lab-700 dark:text-dark-ink-soft dark:hover:bg-dark-surface/40 dark:md:hover:bg-transparent dark:md:hover:text-lab-500"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-ink/10 bg-lab-900 dark:border-dark-border">
+      <div className="mx-auto flex max-w-md items-center justify-around py-2">
+        {TABS.map(({ key, label, icon: Icon }) => {
+          const isActive = activeTab === key;
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setActiveTab(key)}
+              className={`flex flex-col items-center gap-1 px-3 py-1.5 text-xs font-medium transition-colors ${
+                isActive ? "text-coral-500" : "text-lab-400"
+              }`}
+            >
+              <Icon size={22} strokeWidth={isActive ? 2.2 : 1.8} />
+              <span>{label}</span>
+            </button>
+          );
+        })}
       </div>
-    </div>
+    </nav>
   );
 }
