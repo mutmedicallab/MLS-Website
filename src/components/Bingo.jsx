@@ -36,6 +36,8 @@ export default function Bingo() {
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const [leaderboard, setLeaderboard] = useState([]);
+  const [activeSquare, setActiveSquare] = useState(null);
+  const [inputValue, setInputValue] = useState("");
 
   useEffect(() => {
     const savedId = localStorage.getItem("mutmlsa_bingo_card_id");
@@ -74,20 +76,37 @@ export default function Bingo() {
     }
   }
 
-  async function toggleSquare(index) {
-    if (index === 11) return; // free space, always marked
-    const alreadyDone = Boolean(card.filled_squares[index]);
+  function openSquare(index) {
+    if (index === 11) return; // free space
+    setActiveSquare(index);
+    setInputValue(card.filled_squares[index] || "");
+  }
+
+  async function submitSquare(e) {
+    e.preventDefault();
     const res = await fetch(`${API_BASE_URL}/api/bingo/${card.id}/fill`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        squareIndex: index,
-        personName: alreadyDone ? "" : "done",
-      }),
+      body: JSON.stringify({ squareIndex: activeSquare, personName: inputValue.trim() }),
     });
     const data = await res.json();
     if (data.card) {
       setCard(data.card);
+      setActiveSquare(null);
+      loadLeaderboard();
+    }
+  }
+
+  async function clearSquare() {
+    const res = await fetch(`${API_BASE_URL}/api/bingo/${card.id}/fill`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ squareIndex: activeSquare, personName: "" }),
+    });
+    const data = await res.json();
+    if (data.card) {
+      setCard(data.card);
+      setActiveSquare(null);
       loadLeaderboard();
     }
   }
@@ -116,8 +135,8 @@ export default function Bingo() {
           MUTMLSA Bingo
         </h2>
         <p className="mt-3 max-w-xl text-ink-soft dark:text-dark-ink-soft">
-          Get involved this week and mark off your squares — first to a full
-          line wins bragging rights.
+          Find someone who fits each square and write their name in — first
+          to a full line wins.
         </p>
 
         {leaderboard.length > 0 && (
@@ -190,23 +209,66 @@ export default function Bingo() {
             </p>
             <div className="mt-4 grid grid-cols-5 gap-1.5">
               {SQUARES.map((sq, i) => {
-                const marked = Boolean(card.filled_squares[i]) || i === 11;
+                const filledName = card.filled_squares[i];
+                const isFree = i === 11;
                 return (
                   <button
                     key={i}
                     type="button"
-                    onClick={() => toggleSquare(i)}
-                    className={`aspect-square rounded-sm border p-1 text-[9px] leading-tight transition-colors sm:text-[10px] ${
-                      marked
+                    onClick={() => openSquare(i)}
+                    className={`aspect-square rounded-sm border p-1 text-[8px] leading-tight transition-colors sm:text-[9px] ${
+                      filledName || isFree
                         ? "border-lab-600 bg-lab-600 text-paper"
                         : "border-ink/10 bg-lab-50/50 text-ink-soft dark:border-dark-border dark:bg-dark-surface/40 dark:text-dark-ink-soft"
                     }`}
                   >
-                    {sq}
+                    {isFree ? "FREE" : filledName ? filledName : sq}
                   </button>
                 );
               })}
             </div>
+
+            {activeSquare !== null && (
+              <div className="fixed inset-0 z-[100] flex items-center justify-center bg-lab-900/80 p-5">
+                <div className="w-full max-w-sm rounded-sm bg-paper p-5 dark:bg-dark-bg">
+                  <p className="text-sm text-ink dark:text-dark-ink">{SQUARES[activeSquare]}</p>
+                  <form onSubmit={submitSquare} className="mt-4 flex gap-2">
+                    <input
+                      type="text"
+                      autoFocus
+                      value={inputValue}
+                      onChange={(e) => setInputValue(e.target.value)}
+                      placeholder="Their name"
+                      className="flex-1 rounded-sm border border-ink/15 bg-transparent px-3 py-2 text-sm dark:border-dark-border dark:text-dark-ink"
+                    />
+                    <button
+                      type="submit"
+                      className="rounded-sm bg-coral-500 px-4 py-2 text-sm font-semibold text-paper"
+                    >
+                      Save
+                    </button>
+                  </form>
+                  <div className="mt-3 flex items-center justify-between">
+                    <button
+                      type="button"
+                      onClick={() => setActiveSquare(null)}
+                      className="label-tag text-ink-soft dark:text-dark-ink-soft"
+                    >
+                      Cancel
+                    </button>
+                    {card.filled_squares[activeSquare] && (
+                      <button
+                        type="button"
+                        onClick={clearSquare}
+                        className="label-tag text-coral-600"
+                      >
+                        Clear this square
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
