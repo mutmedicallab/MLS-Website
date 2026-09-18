@@ -137,6 +137,7 @@ export default function Bingo() {
         <p className="mt-3 max-w-xl text-ink-soft dark:text-dark-ink-soft">
           Find someone who fits each square and write their name in — first
           to a full line wins but first to finish all 25 gets all bragging rights.
+          One name cannot appear twice.
         </p>
 
         {leaderboard.length > 0 && (
