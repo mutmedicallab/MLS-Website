@@ -2,6 +2,9 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import Reveal from "./Reveal";
 
+//Year 1 pictures
+
+import Pic1 from "../assets/currentStudents/Y1/01.jpeg";
 // Each year holds several "entries" — a mix of formal group photos and
 // casual candid shots, since content keeps accumulating for the same
 // cohort as they move through the program.
@@ -13,7 +16,7 @@ const CURRENT_STUDENTS = [
     yearLabel: "Y1",
     yearName: "Year 1",
     entries: [
-      { caption: "2026/2027 Y1 Cohort", tagline: "The newest additions to the bench", photos: [] },
+      { caption: "2026/2027 Y1 Cohort", tagline: "The newest additions to the bench", photos: [Pic1] },
     ],
   },
   {
