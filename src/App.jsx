@@ -1,14 +1,16 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Analytics } from "@vercel/analytics/react";
 
 import TopBar from "./components/TopBar";
 import Navbar from "./components/Navbar";
+import TabBar from "./components/TabBar";
 import Hero from "./components/Hero";
 import About from "./components/About";
 import Focus from "./components/Focus";
 import Cohorts from "./components/Cohorts";
 import CurrentStudents from "./components/CurrentStudents";
 import Events from "./components/Events";
+import Bingo from "./components/Bingo";
 import Moments from "./components/Moments";
 import Alumni from "./components/Alumni";
 import Committee from "./components/Committee";
@@ -22,6 +24,7 @@ import AdminPortal from "./components/AdminPortal";
 
 export default function App() {
   const [dark, setDark] = useDarkMode();
+  const [activeTab, setActiveTab] = useState("home");
 
   useEffect(() => {
     if (window.location.hash) {
@@ -39,32 +42,52 @@ export default function App() {
   return (
     <div className="min-h-screen bg-paper text-ink dark:bg-dark-bg dark:text-dark-ink">
       <TopBar />
-      <Navbar dark={dark} setDark={setDark} />
+{activeTab === "home" && <Navbar dark={dark} setDark={setDark} />}
+<TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
+
       <main>
-        <Hero />
-        <Reveal>
-          <About />
-        </Reveal>
-        <Focus />
-        <Cohorts />
-        <Reveal>
-          <Events />
-        </Reveal>
-        <Reveal>
-          <Moments />
-        </Reveal>
-        <Reveal>
-          <Alumni />
-        </Reveal>
-        <Reveal>
-          <CurrentStudents />
-        </Reveal>
-        <Committee />
-        <Newsletter />
-        <Reveal>
-          <Join />
-        </Reveal>
+        {activeTab === "home" && (
+          <>
+            <Hero />
+            <Reveal>
+              <About />
+            </Reveal>
+            <Focus />
+            <Cohorts />
+            <Committee />
+            <Newsletter />
+            <Reveal>
+              <Join />
+            </Reveal>
+          </>
+        )}
+
+        {activeTab === "archive" && (
+          <>
+            <Reveal>
+              <Moments />
+            </Reveal>
+            <Reveal>
+              <Alumni />
+            </Reveal>
+            <Reveal>
+              <CurrentStudents />
+            </Reveal>
+          </>
+        )}
+
+        {activeTab === "get involved" && (
+          <>
+            <Reveal>
+              <Events />
+            </Reveal>
+            <Reveal>
+              <Bingo />
+            </Reveal>
+          </>
+        )}
       </main>
+
       <Footer />
       <ChatWidget />
       <Analytics />
