@@ -36,7 +36,7 @@ export default function Events() {
         <div className="mt-8 flex items-center gap-3 rounded-sm border border-paper/10 bg-paper/5 px-5 py-4">
           <span className="label-tag rounded-sm bg-paper/10 px-2 py-1 text-lab-500">Weekly</span>
           <p className="text-sm text-paper/70">
-            General meetings every <span className="text-paper">Thursday, 5:00 PM</span> — TBA.
+            General meetings every <span className="text-paper">Thursday, 5:00 PM</span> —Room 21, Engineering Classes.
           </p>
         </div>
       </div>
