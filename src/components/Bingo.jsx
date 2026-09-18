@@ -13,8 +13,9 @@ const SQUARES = [
   "Visit the Alumni gallery",
   "Subscribe to the newsletter",
   "Follow @mut_mlsa on Instagram",
-  "Attend a screening camp / outreach event",
   "FREE SPACE",
+  "Attend a screening camp / outreach event",
+  "Learn one thing about Haematology",
   "Learn one thing about Microbiology",
   "Take a photo at a MUTMLSA event",
   "Message the committee on WhatsApp",
@@ -25,7 +26,6 @@ const SQUARES = [
   "Learn about the KEMELSA Conference",
   "Ask a debate question at a meeting",
   "Watch the Game Night video in Moments",
-  "Learn one thing about Haematology",
   "Recommend MUTMLSA to a friend",
 ];
 
@@ -35,6 +35,7 @@ export default function Bingo() {
   const [searchName, setSearchName] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [leaderboard, setLeaderboard] = useState([]);
 
   useEffect(() => {
     const savedId = localStorage.getItem("mutmlsa_bingo_card_id");
@@ -48,7 +49,14 @@ export default function Bingo() {
     } else {
       setLoading(false);
     }
+    loadLeaderboard();
   }, []);
+
+  function loadLeaderboard() {
+    fetch(`${API_BASE_URL}/api/bingo/leaderboard`)
+      .then((res) => res.json())
+      .then((data) => setLeaderboard(data.leaderboard || []));
+  }
 
   async function handleCreate(e) {
     e.preventDefault();
@@ -62,18 +70,26 @@ export default function Bingo() {
     if (data.card) {
       setCard(data.card);
       localStorage.setItem("mutmlsa_bingo_card_id", data.card.id);
+      loadLeaderboard();
     }
   }
 
   async function toggleSquare(index) {
-    if (index === 12) return; // free space, can't unmark
-    const res = await fetch(`${API_BASE_URL}/api/bingo/${card.id}/toggle`, {
+    if (index === 11) return; // free space, always marked
+    const alreadyDone = Boolean(card.filled_squares[index]);
+    const res = await fetch(`${API_BASE_URL}/api/bingo/${card.id}/fill`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ squareIndex: index }),
+      body: JSON.stringify({
+        squareIndex: index,
+        personName: alreadyDone ? "" : "done",
+      }),
     });
     const data = await res.json();
-    if (data.card) setCard(data.card);
+    if (data.card) {
+      setCard(data.card);
+      loadLeaderboard();
+    }
   }
 
   async function handleFind(e) {
@@ -103,6 +119,22 @@ export default function Bingo() {
           Get involved this week and mark off your squares — first to a full
           line wins bragging rights.
         </p>
+
+        {leaderboard.length > 0 && (
+          <div className="mt-6 rounded-sm border border-ink/10 bg-lab-50/50 p-4 dark:border-dark-border dark:bg-dark-surface/40">
+            <p className="label-tag text-lab-700 dark:text-lab-500">Leaderboard</p>
+            <div className="mt-2 space-y-1">
+              {leaderboard.map((entry, i) => (
+                <div key={entry.id} className="flex items-center justify-between text-sm">
+                  <span className="text-ink-soft dark:text-dark-ink-soft">
+                    {i + 1}. {entry.name}
+                  </span>
+                  <span className="font-semibold text-lab-800 dark:text-dark-ink">{entry.score}/25</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {!card ? (
           <div className="mt-8 max-w-sm">
@@ -153,10 +185,12 @@ export default function Bingo() {
           </div>
         ) : (
           <div className="mt-8">
-            <p className="label-tag text-lab-700 dark:text-lab-500">Playing as {card.name}</p>
+            <p className="label-tag text-lab-700 dark:text-lab-500">
+              Playing as {card.name} · {Object.keys(card.filled_squares).length}/25
+            </p>
             <div className="mt-4 grid grid-cols-5 gap-1.5">
               {SQUARES.map((sq, i) => {
-                const marked = (card.marked_squares || []).includes(i);
+                const marked = Boolean(card.filled_squares[i]) || i === 11;
                 return (
                   <button
                     key={i}
