@@ -24,7 +24,7 @@ const SQUARES = [
   "Charged their phone overnight only to realize the switch was off",
   "Came to campus this week solely because of Free wifi",
   "Knows the dates of the KeMELSA Blood Drive",
-  "Someone who knows the two people who are part of Kemelsa leadership",
+  "Knows the two people who are part of Kemelsa leadership",
   "Has watched the Game Night video in Moments",
   "Recommended MUTMLSA to a friend this week",
 ];
@@ -136,7 +136,7 @@ export default function Bingo() {
         </h2>
         <p className="mt-3 max-w-xl text-ink-soft dark:text-dark-ink-soft">
           Find someone who fits each square and write their name in — first
-          to a full line wins.
+          to a full line wins but first to finish all 25 gets all bragging rights.
         </p>
 
         {leaderboard.length > 0 && (
