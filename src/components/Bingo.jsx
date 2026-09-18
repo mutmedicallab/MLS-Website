@@ -222,7 +222,18 @@ export default function Bingo() {
                         : "border-ink/10 bg-lab-50/50 text-ink-soft dark:border-dark-border dark:bg-dark-surface/40 dark:text-dark-ink-soft"
                     }`}
                   >
-                    {isFree ? "FREE" : filledName ? filledName : sq}
+                    {isFree ? (
+                      "FREE"
+                    ) : (
+                      <span className="flex h-full flex-col items-center justify-center gap-0.5 text-center">
+                        <span className="leading-tight">{sq}</span>
+                        {filledName && (
+                          <span className="mt-0.5 font-semibold leading-tight text-paper/90">
+                            — {filledName}
+                          </span>
+                        )}
+                      </span>
+                    )}
                   </button>
                 );
               })}
