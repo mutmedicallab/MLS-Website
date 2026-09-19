@@ -1,38 +1,83 @@
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import confetti from "canvas-confetti";
 import { API_BASE_URL } from "../config/api";
 
 const POINTS_PER_SQUARE = 10;
 const HEADER_LETTERS = ["B", "I", "N", "G", "O"];
 
 const SQUARES = [
-  "Attended this week'sThursday meeting",
-  "Has talked to someone from a different year",
-  "Visited the Moments section",
-  "Met a committee member",
-  "Attended Game Night last semester",
-  "Has asked the chatbot a question",
-  "Shared the site with a classmate",
+  "Attend a Thursday meeting",
+  "Talk to someone from a different year",
+  "Visit the Moments section",
+  "Meet a committee member",
+  "Attend Game Night",
+  "Ask the chatbot a question",
+  "Share the site with a classmate",
   "Read the MUTMLSA constitution highlights",
-  "Visited the Alumni gallery",
-  "Subscribed to the newsletter",
+  "Visit the Alumni gallery",
+  "Subscribe to the newsletter",
   "Follow @mut_mlsa on Instagram",
-  "Attended a screening camp / outreach event this year",
+  "Attend a screening camp / outreach event",
   "FREE SPACE",
-  "Learned one thing about Microbiology",
-  "Learned a new thing about Haematology",
-  "Find someone who can play a Musical Instrument",
-  "Knows someone who has travelled abroad in School",
-  "Met a Y4 student this week",
-  "Find someone who can play chess like a pro",
-  "Knows the Father of Genetics",
-  "Knows the two people in the Kemelsa Council at MUT",
-  "Knows the name of Our School President",
-  "Watched the Game Night video in Moments",
-  "Recommended MUTMLSA to a friend this week",
-  "Knows the name of the MUTMLSA Secretary General",
+  "Learn one thing about Microbiology",
+  "Take a photo at a MUTMLSA event",
+  "Message the committee on WhatsApp",
+  "Toggle dark mode on the site",
+  "Meet a Y4 student",
+  "Attend the Recruitment Drive",
+  "Find your name in the admin roster",
+  "Learn about the KEMELSA Conference",
+  "Ask a debate question at a meeting",
+  "Watch the Game Night video in Moments",
+  "Learn one thing about Haematology",
+  "Recommend MUTMLSA to a friend",
 ];
 
 const MAX_POINTS = SQUARES.length * POINTS_PER_SQUARE;
+
+// Fires a confetti burst. Blackout gets a bigger, longer, two-sided burst;
+// Bingo gets a single centered pop.
+function fireConfetti(kind) {
+  const colors = ["#ef6351", "#1f3b33", "#f4ede0", "#a8c3b8"]; // coral / lab / paper / soft accents — swap for your real palette if different
+
+  if (kind === "blackout") {
+    const duration = 2200;
+    const end = Date.now() + duration;
+
+    (function frame() {
+      confetti({
+        particleCount: 4,
+        angle: 60,
+        spread: 65,
+        origin: { x: 0, y: 0.6 },
+        colors,
+      });
+      confetti({
+        particleCount: 4,
+        angle: 120,
+        spread: 65,
+        origin: { x: 1, y: 0.6 },
+        colors,
+      });
+      if (Date.now() < end) requestAnimationFrame(frame);
+    })();
+
+    confetti({
+      particleCount: 120,
+      spread: 100,
+      origin: { y: 0.5 },
+      colors,
+    });
+  } else {
+    confetti({
+      particleCount: 80,
+      spread: 70,
+      origin: { y: 0.5 },
+      colors,
+    });
+  }
+}
 
 export default function Bingo() {
   const [card, setCard] = useState(null);
@@ -44,6 +89,9 @@ export default function Bingo() {
   const [activeSquare, setActiveSquare] = useState(null);
   const [inputValue, setInputValue] = useState("");
   const [celebration, setCelebration] = useState(null); // "bingo" | "blackout" | null
+  const [justFilledIndex, setJustFilledIndex] = useState(null);
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState("");
 
   useEffect(() => {
     const savedId = localStorage.getItem("mutmlsa_bingo_card_id");
@@ -59,6 +107,21 @@ export default function Bingo() {
     }
     loadLeaderboard();
   }, []);
+
+  useEffect(() => {
+    if (celebration) {
+      fireConfetti(celebration);
+      const t = setTimeout(() => setCelebration(null), celebration === "blackout" ? 4500 : 3200);
+      return () => clearTimeout(t);
+    }
+  }, [celebration]);
+
+  useEffect(() => {
+    if (justFilledIndex !== null) {
+      const t = setTimeout(() => setJustFilledIndex(null), 600);
+      return () => clearTimeout(t);
+    }
+  }, [justFilledIndex]);
 
   function loadLeaderboard() {
     fetch(`${API_BASE_URL}/api/bingo/leaderboard`)
@@ -98,6 +161,7 @@ export default function Bingo() {
     const data = await res.json();
     if (data.card) {
       setCard(data.card);
+      setJustFilledIndex(activeSquare);
       setActiveSquare(null);
       loadLeaderboard();
       if (data.justGotBlackout) {
@@ -136,6 +200,22 @@ export default function Bingo() {
     setSearchResults([]);
   }
 
+  async function submitRename(e) {
+    e.preventDefault();
+    if (!nameInput.trim()) return;
+    const res = await fetch(`${API_BASE_URL}/api/bingo/${card.id}/name`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: nameInput.trim() }),
+    });
+    const data = await res.json();
+    if (data.card) {
+      setCard(data.card);
+      setEditingName(false);
+      loadLeaderboard();
+    }
+  }
+
   if (loading) return null;
 
   const filledCount = card ? Object.keys(card.filled_squares || {}).length : 0;
@@ -151,7 +231,6 @@ export default function Bingo() {
         <p className="mt-3 max-w-xl text-ink-soft dark:text-dark-ink-soft">
           Find someone who fits each square and write their name in — each
           square is worth {POINTS_PER_SQUARE} points, {MAX_POINTS} total.
-          See you at the top!
         </p>
 
         {leaderboard.length > 0 && (
@@ -183,25 +262,31 @@ export default function Bingo() {
         )}
 
         {!card ? (
-          <div className="mt-8 max-w-sm">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35 }}
+            className="mt-8 max-w-sm"
+          >
             <p className="mb-1 label-tag text-ink-soft dark:text-dark-ink-soft">
-  Use your name or a nickname you wish
-</p>
-<form onSubmit={handleCreate} className="flex gap-2">
-  <input
-    type="text"
-    value={name}
-    onChange={(e) => setName(e.target.value)}
-    placeholder="e.g. Joseph or Jose M."
-    className="flex-1 rounded-sm border border-ink/15 bg-transparent px-3 py-2 text-sm dark:border-dark-border dark:text-dark-ink"
-  />
-  <button
-    type="submit"
-    className="rounded-sm bg-coral-500 px-4 py-2 text-sm font-semibold text-paper"
-  >
-    Start
-  </button>
-</form>
+              Use your real name or a nickname others will recognize
+            </p>
+            <form onSubmit={handleCreate} className="flex gap-2">
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. Joseph or Jose M."
+                className="flex-1 rounded-sm border border-ink/15 bg-transparent px-3 py-2 text-sm dark:border-dark-border dark:text-dark-ink"
+              />
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                type="submit"
+                className="rounded-sm bg-coral-500 px-4 py-2 text-sm font-semibold text-paper"
+              >
+                Start
+              </motion.button>
+            </form>
 
             <p className="mt-4 label-tag text-ink-soft dark:text-dark-ink-soft">
               Already started on another device?
@@ -214,29 +299,63 @@ export default function Bingo() {
                 placeholder="Find your card by name"
                 className="flex-1 rounded-sm border border-ink/15 bg-transparent px-3 py-2 text-sm dark:border-dark-border dark:text-dark-ink"
               />
-              <button
+              <motion.button
+                whileTap={{ scale: 0.95 }}
                 type="submit"
                 className="rounded-sm border border-lab-700 px-4 py-2 text-sm font-semibold text-lab-700 dark:border-lab-500 dark:text-lab-500"
               >
                 Find
-              </button>
+              </motion.button>
             </form>
             {searchResults.map((c) => (
-              <button
+              <motion.button
                 key={c.id}
                 type="button"
+                whileHover={{ x: 2 }}
                 onClick={() => selectFoundCard(c)}
                 className="mt-2 block w-full rounded-sm border border-ink/10 p-2 text-left text-sm dark:border-dark-border"
               >
                 {c.name} — started {new Date(c.created_at).toLocaleDateString()}
-              </button>
+              </motion.button>
             ))}
-          </div>
+          </motion.div>
         ) : (
           <div className="mt-8">
-            <p className="label-tag text-lab-700 dark:text-lab-500">
-              Playing as {card.name} · {filledCount}/{SQUARES.length} squares · {points}/{MAX_POINTS} pts
-            </p>
+            {editingName ? (
+              <form onSubmit={submitRename} className="flex items-center gap-2">
+                <input
+                  type="text"
+                  autoFocus
+                  value={nameInput}
+                  onChange={(e) => setNameInput(e.target.value)}
+                  className="rounded-sm border border-ink/15 bg-transparent px-2 py-1 text-sm dark:border-dark-border dark:text-dark-ink"
+                />
+                <button type="submit" className="label-tag text-lab-700 underline dark:text-lab-500">
+                  Save
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditingName(false)}
+                  className="label-tag text-ink-soft dark:text-dark-ink-soft"
+                >
+                  Cancel
+                </button>
+              </form>
+            ) : (
+              <p className="label-tag flex flex-wrap items-center gap-2 text-lab-700 dark:text-lab-500">
+                Playing as {card.name} · {filledCount}/{SQUARES.length} squares · {points}/{MAX_POINTS} pts
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNameInput(card.name);
+                    setEditingName(true);
+                  }}
+                  className="text-ink-soft underline dark:text-dark-ink-soft"
+                >
+                  Edit
+                </button>
+              </p>
+            )}
 
             <div className="mt-4 overflow-hidden rounded-sm border border-ink/10 dark:border-dark-border">
               <div className="grid grid-cols-5 bg-lab-900">
@@ -254,12 +373,25 @@ export default function Bingo() {
                 {SQUARES.map((sq, i) => {
                   const filledName = (card.filled_squares || {})[i];
                   const isFree = i === 12;
+                  const justFilled = justFilledIndex === i;
                   return (
-                    <button
+                    <motion.button
                       key={i}
                       type="button"
                       onClick={() => openSquare(i)}
                       disabled={isFree}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={
+                        justFilled
+                          ? { opacity: 1, scale: [1, 1.12, 1] }
+                          : { opacity: 1, scale: 1 }
+                      }
+                      transition={
+                        justFilled
+                          ? { duration: 0.45, ease: "easeOut" }
+                          : { duration: 0.25, delay: i * 0.01 }
+                      }
+                      whileTap={!isFree ? { scale: 0.94 } : {}}
                       className={`flex min-h-[110px] flex-col justify-between border border-ink/10 p-2 text-left transition-colors dark:border-dark-border sm:min-h-[130px] ${
                         isFree
                           ? "bg-coral-500 text-paper"
@@ -280,78 +412,111 @@ export default function Bingo() {
                           {filledName ? filledName : "Tap to add"}
                         </span>
                       )}
-                    </button>
+                    </motion.button>
                   );
                 })}
               </div>
             </div>
 
-            {activeSquare !== null && (
-              <div className="fixed inset-0 z-[100] flex items-center justify-center bg-lab-900/80 p-5">
-                <div className="w-full max-w-sm rounded-sm bg-paper p-5 dark:bg-dark-bg">
-                  <p className="text-sm text-ink dark:text-dark-ink">{SQUARES[activeSquare]}</p>
-                  <form onSubmit={submitSquare} className="mt-4 flex gap-2">
-                    <input
-                      type="text"
-                      autoFocus
-                      value={inputValue}
-                      onChange={(e) => setInputValue(e.target.value)}
-                      placeholder="Their name"
-                      className="flex-1 rounded-sm border border-ink/15 bg-transparent px-3 py-2 text-sm dark:border-dark-border dark:text-dark-ink"
-                    />
-                    <button
-                      type="submit"
-                      className="rounded-sm bg-coral-500 px-4 py-2 text-sm font-semibold text-paper"
-                    >
-                      Save
-                    </button>
-                  </form>
-                  <div className="mt-3 flex items-center justify-between">
-                    <button
-                      type="button"
-                      onClick={() => setActiveSquare(null)}
-                      className="label-tag text-ink-soft dark:text-dark-ink-soft"
-                    >
-                      Cancel
-                    </button>
-                    {(card.filled_squares || {})[activeSquare] && (
+            <AnimatePresence>
+              {activeSquare !== null && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 z-[100] flex items-center justify-center bg-lab-900/80 p-5"
+                >
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                    transition={{ duration: 0.2 }}
+                    className="w-full max-w-sm rounded-sm bg-paper p-5 dark:bg-dark-bg"
+                  >
+                    <p className="text-sm text-ink dark:text-dark-ink">{SQUARES[activeSquare]}</p>
+                    <form onSubmit={submitSquare} className="mt-4 flex gap-2">
+                      <input
+                        type="text"
+                        autoFocus
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        placeholder="Their name"
+                        className="flex-1 rounded-sm border border-ink/15 bg-transparent px-3 py-2 text-sm dark:border-dark-border dark:text-dark-ink"
+                      />
+                      <motion.button
+                        whileTap={{ scale: 0.95 }}
+                        type="submit"
+                        className="rounded-sm bg-coral-500 px-4 py-2 text-sm font-semibold text-paper"
+                      >
+                        Save
+                      </motion.button>
+                    </form>
+                    <div className="mt-3 flex items-center justify-between">
                       <button
                         type="button"
-                        onClick={clearSquare}
-                        className="label-tag text-coral-600"
+                        onClick={() => setActiveSquare(null)}
+                        className="label-tag text-ink-soft dark:text-dark-ink-soft"
                       >
-                        Clear this square
+                        Cancel
                       </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
+                      {(card.filled_squares || {})[activeSquare] && (
+                        <button
+                          type="button"
+                          onClick={clearSquare}
+                          className="label-tag text-coral-600"
+                        >
+                          Clear this square
+                        </button>
+                      )}
+                    </div>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-            {celebration && (
-              <div
-                className="fixed inset-0 z-[110] flex items-center justify-center bg-lab-900/85 p-5"
-                onClick={() => setCelebration(null)}
-              >
-                <div className="rounded-sm bg-paper px-10 py-8 text-center shadow-2xl dark:bg-dark-bg">
-                  <p className="font-display text-5xl font-bold tracking-tight text-coral-600">
-                    {celebration === "blackout" ? "BLACKOUT!" : "BINGO!"}
-                  </p>
-                  <p className="mt-2 text-sm text-ink-soft dark:text-dark-ink-soft">
-                    {celebration === "blackout"
-                      ? "You've filled every square. Legendary."
-                      : "You've completed a line — keep going for the full board."}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setCelebration(null)}
-                    className="label-tag mt-4 text-lab-700 underline underline-offset-4 dark:text-lab-500"
+            <AnimatePresence>
+              {celebration && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 z-[110] flex items-center justify-center bg-lab-900/85 p-5"
+                  onClick={() => setCelebration(null)}
+                >
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.6, rotate: -4 }}
+                    animate={{
+                      opacity: 1,
+                      scale: 1,
+                      rotate: 0,
+                      transition: { type: "spring", stiffness: 260, damping: 16 },
+                    }}
+                    exit={{ opacity: 0, scale: 0.85 }}
+                    className="rounded-sm bg-paper px-10 py-8 text-center shadow-2xl dark:bg-dark-bg"
                   >
-                    Continue
-                  </button>
-                </div>
-              </div>
-            )}
+                    <motion.p
+                      animate={{ scale: [1, 1.08, 1] }}
+                      transition={{ duration: 0.6, repeat: 2, ease: "easeInOut" }}
+                      className="font-display text-5xl font-bold tracking-tight text-coral-600"
+                    >
+                      {celebration === "blackout" ? "BLACKOUT!" : "BINGO!"}
+                    </motion.p>
+                    <p className="mt-2 text-sm text-ink-soft dark:text-dark-ink-soft">
+                      {celebration === "blackout"
+                        ? "You've filled every square. Legendary."
+                        : "You've completed a line — keep going for the full board."}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setCelebration(null)}
+                      className="label-tag mt-4 text-lab-700 underline underline-offset-4 dark:text-lab-500"
+                    >
+                      Continue
+                    </button>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         )}
       </div>
