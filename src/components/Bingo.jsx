@@ -29,6 +29,7 @@ const SQUARES = [
   "Knows the name of Our School President",
   "Watched the Game Night video in Moments",
   "Recommended MUTMLSA to a friend this week",
+  "Knows the name of the MUTMLSA Secretary General",
 ];
 
 const MAX_POINTS = SQUARES.length * POINTS_PER_SQUARE;
