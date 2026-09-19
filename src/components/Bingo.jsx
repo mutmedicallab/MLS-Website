@@ -1,33 +1,36 @@
 import { useState, useEffect } from "react";
 import { API_BASE_URL } from "../config/api";
 
+const POINTS_PER_SQUARE = 10;
+
 const SQUARES = [
-  "Attended this week's Thursday meeting",
-  "Talked to someone from a different year",
-  "Someone who has visited the Moments section",
-  "Met a committee member",
-  "Attended last semester's Game Night",
-  "Has asked the chatbot a question",
-  "Shared the site with a classmate",
+  "Attend a Thursday meeting",
+  "Talk to someone from a different year",
+  "Visit the Moments section",
+  "Meet a committee member",
+  "Attend Game Night",
+  "Ask the chatbot a question",
+  "Share the site with a classmate",
   "Read the MUTMLSA constitution highlights",
-  "Visited the Alumni gallery",
-  "Subscribed to the newsletter",
-  "Followed @mut_mlsa on Instagram",
-  "Attend a screening camp / outreach event this year",
-  "FREE SPACE",
-  "Has learned one thing about Haematology",
-  "Has learned one thing about Microbiology",
-  "Took a photo at a MUTMLSA event this year",
-  "Knows how to play a musical instrument",
-  "Met someone this week who has travelled abroad",
-  "Met a Y4 student",
-  "Charged their phone overnight only to realize the switch was off",
-  "Came to campus this week solely because of Free wifi",
-  "Knows the dates of the KeMELSA Blood Drive",
-  "Knows the two people who are part of Kemelsa leadership",
-  "Has watched the Game Night video in Moments",
-  "Recommended MUTMLSA to a friend this week",
+  "Visit the Alumni gallery",
+  "Subscribe to the newsletter",
+  "Follow @mut_mlsa on Instagram",
+  "Attend a screening camp / outreach event",
+  "Learn one thing about Haematology",
+  "Learn one thing about Microbiology",
+  "Take a photo at a MUTMLSA event",
+  "Message the committee on WhatsApp",
+  "Toggle dark mode on the site",
+  "Meet a Y4 student",
+  "Attend the Recruitment Drive",
+  "Find your name in the admin roster",
+  "Learn about the KEMELSA Conference",
+  "Ask a debate question at a meeting",
+  "Watch the Game Night video in Moments",
+  "Recommend MUTMLSA to a friend",
 ];
+
+const MAX_POINTS = SQUARES.length * POINTS_PER_SQUARE;
 
 export default function Bingo() {
   const [card, setCard] = useState(null);
@@ -77,7 +80,6 @@ export default function Bingo() {
   }
 
   function openSquare(index) {
-    if (index === 11) return; // free space
     setActiveSquare(index);
     setInputValue(card.filled_squares[index] || "");
   }
@@ -127,17 +129,19 @@ export default function Bingo() {
 
   if (loading) return null;
 
+  const filledCount = card ? Object.keys(card.filled_squares).length : 0;
+  const points = filledCount * POINTS_PER_SQUARE;
+
   return (
     <section id="bingo" className="border-t border-ink/10 py-20 dark:border-dark-border md:py-28">
-      <div className="mx-auto max-w-3xl px-5 md:px-8">
+      <div className="mx-auto max-w-2xl px-5 md:px-8">
         <span className="label-tag text-lab-700 dark:text-lab-500">This week's challenge</span>
         <h2 className="mt-3 font-display text-3xl font-semibold text-lab-900 md:text-4xl dark:text-dark-ink">
           MUTMLSA Bingo
         </h2>
         <p className="mt-3 max-w-xl text-ink-soft dark:text-dark-ink-soft">
-          Find someone who fits each square and write their name in — first
-          to a full line wins but first to finish all 25 gets all bragging rights.
-          One name cannot appear twice.
+          Find someone who fits each square and write their name in — each
+          square is worth {POINTS_PER_SQUARE} points.
         </p>
 
         {leaderboard.length > 0 && (
@@ -149,7 +153,9 @@ export default function Bingo() {
                   <span className="text-ink-soft dark:text-dark-ink-soft">
                     {i + 1}. {entry.name}
                   </span>
-                  <span className="font-semibold text-lab-800 dark:text-dark-ink">{entry.score}/25</span>
+                  <span className="font-semibold text-lab-800 dark:text-dark-ink">
+                    {entry.score} pts
+                  </span>
                 </div>
               ))}
             </div>
@@ -206,33 +212,31 @@ export default function Bingo() {
         ) : (
           <div className="mt-8">
             <p className="label-tag text-lab-700 dark:text-lab-500">
-              Playing as {card.name} · {Object.keys(card.filled_squares).length}/25
+              Playing as {card.name} · {filledCount}/{SQUARES.length} squares · {points}/{MAX_POINTS} pts
             </p>
-            <div className="mt-4 grid grid-cols-5 gap-1.5">
+
+            <div className="mt-4 divide-y divide-ink/10 overflow-hidden rounded-sm border border-ink/10 dark:divide-dark-border dark:border-dark-border">
               {SQUARES.map((sq, i) => {
                 const filledName = card.filled_squares[i];
-                const isFree = i === 11;
                 return (
                   <button
                     key={i}
                     type="button"
                     onClick={() => openSquare(i)}
-                    className={`aspect-square rounded-sm border p-1 text-[8px] leading-tight transition-colors sm:text-[9px] ${
-                      filledName || isFree
-                        ? "border-lab-600 bg-lab-600 text-paper"
-                        : "border-ink/10 bg-lab-50/50 text-ink-soft dark:border-dark-border dark:bg-dark-surface/40 dark:text-dark-ink-soft"
+                    className={`flex w-full flex-col gap-1 px-4 py-4 text-left transition-colors ${
+                      filledName
+                        ? "bg-lab-600 text-paper"
+                        : "bg-lab-50/50 text-ink hover:bg-lab-100/60 dark:bg-dark-surface/40 dark:text-dark-ink dark:hover:bg-dark-surface/70"
                     }`}
                   >
-                    {isFree ? (
-                      "FREE"
+                    <span className="text-sm leading-snug">{sq}</span>
+                    {filledName ? (
+                      <span className="text-xs font-semibold text-paper/90">
+                        — {filledName}
+                      </span>
                     ) : (
-                      <span className="flex h-full flex-col items-center justify-center gap-0.5 text-center">
-                        <span className="leading-tight">{sq}</span>
-                        {filledName && (
-                          <span className="mt-0.5 font-semibold leading-tight text-paper/90">
-                            — {filledName}
-                          </span>
-                        )}
+                      <span className="label-tag text-ink-soft dark:text-dark-ink-soft">
+                        Tap to add
                       </span>
                     )}
                   </button>
