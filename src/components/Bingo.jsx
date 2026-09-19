@@ -151,6 +151,7 @@ export default function Bingo() {
         <p className="mt-3 max-w-xl text-ink-soft dark:text-dark-ink-soft">
           Find someone who fits each square and write their name in — each
           square is worth {POINTS_PER_SQUARE} points, {MAX_POINTS} total.
+          See you at the top!
         </p>
 
         {leaderboard.length > 0 && (
