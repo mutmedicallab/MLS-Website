@@ -184,21 +184,24 @@ export default function Bingo() {
 
         {!card ? (
           <div className="mt-8 max-w-sm">
-            <form onSubmit={handleCreate} className="flex gap-2">
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Your name"
-                className="flex-1 rounded-sm border border-ink/15 bg-transparent px-3 py-2 text-sm dark:border-dark-border dark:text-dark-ink"
-              />
-              <button
-                type="submit"
-                className="rounded-sm bg-coral-500 px-4 py-2 text-sm font-semibold text-paper"
-              >
-                Start
-              </button>
-            </form>
+            <p className="mb-1 label-tag text-ink-soft dark:text-dark-ink-soft">
+  Use your name or a nickname you wish
+</p>
+<form onSubmit={handleCreate} className="flex gap-2">
+  <input
+    type="text"
+    value={name}
+    onChange={(e) => setName(e.target.value)}
+    placeholder="e.g. Joseph or Jose M."
+    className="flex-1 rounded-sm border border-ink/15 bg-transparent px-3 py-2 text-sm dark:border-dark-border dark:text-dark-ink"
+  />
+  <button
+    type="submit"
+    className="rounded-sm bg-coral-500 px-4 py-2 text-sm font-semibold text-paper"
+  >
+    Start
+  </button>
+</form>
 
             <p className="mt-4 label-tag text-ink-soft dark:text-dark-ink-soft">
               Already started on another device?
