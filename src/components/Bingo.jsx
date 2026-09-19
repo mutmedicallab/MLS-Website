@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { API_BASE_URL } from "../config/api";
 
 const POINTS_PER_SQUARE = 10;
+const HEADER_LETTERS = ["B", "I", "N", "G", "O"];
 
 const SQUARES = [
   "Attend a Thursday meeting",
@@ -16,7 +17,7 @@ const SQUARES = [
   "Subscribe to the newsletter",
   "Follow @mut_mlsa on Instagram",
   "Attend a screening camp / outreach event",
-  "Learn one thing about Haematology",
+  "FREE SPACE",
   "Learn one thing about Microbiology",
   "Take a photo at a MUTMLSA event",
   "Message the committee on WhatsApp",
@@ -27,6 +28,7 @@ const SQUARES = [
   "Learn about the KEMELSA Conference",
   "Ask a debate question at a meeting",
   "Watch the Game Night video in Moments",
+  "Learn one thing about Haematology",
   "Recommend MUTMLSA to a friend",
 ];
 
@@ -41,6 +43,7 @@ export default function Bingo() {
   const [leaderboard, setLeaderboard] = useState([]);
   const [activeSquare, setActiveSquare] = useState(null);
   const [inputValue, setInputValue] = useState("");
+  const [celebration, setCelebration] = useState(null); // "bingo" | "blackout" | null
 
   useEffect(() => {
     const savedId = localStorage.getItem("mutmlsa_bingo_card_id");
@@ -80,6 +83,7 @@ export default function Bingo() {
   }
 
   function openSquare(index) {
+    if (index === 12) return;
     setActiveSquare(index);
     setInputValue(card.filled_squares[index] || "");
   }
@@ -96,6 +100,11 @@ export default function Bingo() {
       setCard(data.card);
       setActiveSquare(null);
       loadLeaderboard();
+      if (data.justGotBlackout) {
+        setCelebration("blackout");
+      } else if (data.justGotBingo) {
+        setCelebration("bingo");
+      }
     }
   }
 
@@ -141,7 +150,7 @@ export default function Bingo() {
         </h2>
         <p className="mt-3 max-w-xl text-ink-soft dark:text-dark-ink-soft">
           Find someone who fits each square and write their name in — each
-          square is worth {POINTS_PER_SQUARE} points.
+          square is worth {POINTS_PER_SQUARE} points, {MAX_POINTS} total.
         </p>
 
         {leaderboard.length > 0 && (
@@ -150,11 +159,21 @@ export default function Bingo() {
             <div className="mt-2 space-y-1">
               {leaderboard.map((entry, i) => (
                 <div key={entry.id} className="flex items-center justify-between text-sm">
-                  <span className="text-ink-soft dark:text-dark-ink-soft">
+                  <span className="flex items-center gap-2 text-ink-soft dark:text-dark-ink-soft">
                     {i + 1}. {entry.name}
+                    {entry.blackout && (
+                      <span className="label-tag rounded-sm bg-coral-500 px-1.5 py-0.5 text-paper">
+                        Blackout
+                      </span>
+                    )}
+                    {!entry.blackout && entry.bingo && (
+                      <span className="label-tag rounded-sm bg-lab-600 px-1.5 py-0.5 text-paper">
+                        Bingo
+                      </span>
+                    )}
                   </span>
                   <span className="font-semibold text-lab-800 dark:text-dark-ink">
-                    {entry.score} pts
+                    {entry.score * POINTS_PER_SQUARE} pts
                   </span>
                 </div>
               ))}
@@ -215,33 +234,52 @@ export default function Bingo() {
               Playing as {card.name} · {filledCount}/{SQUARES.length} squares · {points}/{MAX_POINTS} pts
             </p>
 
-            <div className="mt-4 divide-y divide-ink/10 overflow-hidden rounded-sm border border-ink/10 dark:divide-dark-border dark:border-dark-border">
-              {SQUARES.map((sq, i) => {
-                const filledName = card.filled_squares[i];
-                return (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => openSquare(i)}
-                    className={`flex w-full flex-col gap-1 px-4 py-4 text-left transition-colors ${
-                      filledName
-                        ? "bg-lab-600 text-paper"
-                        : "bg-lab-50/50 text-ink hover:bg-lab-100/60 dark:bg-dark-surface/40 dark:text-dark-ink dark:hover:bg-dark-surface/70"
-                    }`}
+            <div className="mt-4 overflow-hidden rounded-sm border border-ink/10 dark:border-dark-border">
+              <div className="grid grid-cols-5 bg-lab-900">
+                {HEADER_LETTERS.map((letter) => (
+                  <div
+                    key={letter}
+                    className="py-3 text-center font-display text-lg font-bold text-lab-100"
                   >
-                    <span className="text-sm leading-snug">{sq}</span>
-                    {filledName ? (
-                      <span className="text-xs font-semibold text-paper/90">
-                        — {filledName}
+                    {letter}
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-5">
+                {SQUARES.map((sq, i) => {
+                  const filledName = card.filled_squares[i];
+                  const isFree = i === 12;
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => openSquare(i)}
+                      disabled={isFree}
+                      className={`flex min-h-[110px] flex-col justify-between border border-ink/10 p-2 text-left transition-colors dark:border-dark-border sm:min-h-[130px] ${
+                        isFree
+                          ? "bg-coral-500 text-paper"
+                          : filledName
+                          ? "bg-lab-600 text-paper"
+                          : "bg-lab-50/60 text-ink hover:bg-lab-100/70 dark:bg-dark-surface/40 dark:text-dark-ink dark:hover:bg-dark-surface/70"
+                      }`}
+                    >
+                      <span className="text-[10px] leading-tight sm:text-xs">
+                        {isFree ? "FREE SPACE" : sq}
                       </span>
-                    ) : (
-                      <span className="label-tag text-ink-soft dark:text-dark-ink-soft">
-                        Tap to add
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
+                      {!isFree && (
+                        <span
+                          className={`label-tag mt-1 truncate ${
+                            filledName ? "text-paper/90" : "text-ink-soft dark:text-dark-ink-soft"
+                          }`}
+                        >
+                          {filledName ? filledName : "Tap to add"}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {activeSquare !== null && (
@@ -282,6 +320,31 @@ export default function Bingo() {
                       </button>
                     )}
                   </div>
+                </div>
+              </div>
+            )}
+
+            {celebration && (
+              <div
+                className="fixed inset-0 z-[110] flex items-center justify-center bg-lab-900/85 p-5"
+                onClick={() => setCelebration(null)}
+              >
+                <div className="rounded-sm bg-paper px-10 py-8 text-center shadow-2xl dark:bg-dark-bg">
+                  <p className="font-display text-5xl font-bold tracking-tight text-coral-600">
+                    {celebration === "blackout" ? "BLACKOUT!" : "BINGO!"}
+                  </p>
+                  <p className="mt-2 text-sm text-ink-soft dark:text-dark-ink-soft">
+                    {celebration === "blackout"
+                      ? "You've filled every square. Legendary."
+                      : "You've completed a line — keep going for the full board."}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setCelebration(null)}
+                    className="label-tag mt-4 text-lab-700 underline underline-offset-4 dark:text-lab-500"
+                  >
+                    Continue
+                  </button>
                 </div>
               </div>
             )}
