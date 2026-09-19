@@ -237,26 +237,39 @@ export default function Bingo() {
           <div className="mt-6 rounded-sm border border-ink/10 bg-lab-50/50 p-4 dark:border-dark-border dark:bg-dark-surface/40">
             <p className="label-tag text-lab-700 dark:text-lab-500">Leaderboard</p>
             <div className="mt-2 space-y-1">
-              {leaderboard.map((entry, i) => (
-                <div key={entry.id} className="flex items-center justify-between text-sm">
-                  <span className="flex items-center gap-2 text-ink-soft dark:text-dark-ink-soft">
-                    {i + 1}. {entry.name}
-                    {entry.blackout && (
-                      <span className="label-tag rounded-sm bg-coral-500 px-1.5 py-0.5 text-paper">
-                        Blackout
-                      </span>
-                    )}
-                    {!entry.blackout && entry.bingo && (
-                      <span className="label-tag rounded-sm bg-lab-600 px-1.5 py-0.5 text-paper">
-                        Bingo
-                      </span>
-                    )}
-                  </span>
-                  <span className="font-semibold text-lab-800 dark:text-dark-ink">
-                    {entry.score * POINTS_PER_SQUARE} pts
-                  </span>
-                </div>
-              ))}
+              {leaderboard.map((entry, i) => {
+  const isYou = card && entry.id === card.id;
+  return (
+    <div
+      key={entry.id}
+      className={`flex items-center justify-between rounded-sm px-2 py-1 text-sm transition-colors ${
+        isYou ? "bg-coral-500/10 ring-1 ring-coral-500/40" : ""
+      }`}
+    >
+      <span className="flex items-center gap-2 text-ink-soft dark:text-dark-ink-soft">
+        {i + 1}. {entry.name}
+        {isYou && (
+          <span className="label-tag rounded-sm bg-coral-500 px-1.5 py-0.5 text-paper">
+            You
+          </span>
+        )}
+        {entry.blackout && (
+          <span className="label-tag rounded-sm bg-coral-500 px-1.5 py-0.5 text-paper">
+            Blackout
+          </span>
+        )}
+        {!entry.blackout && entry.bingo && (
+          <span className="label-tag rounded-sm bg-lab-600 px-1.5 py-0.5 text-paper">
+            Bingo
+          </span>
+        )}
+      </span>
+      <span className="font-semibold text-lab-800 dark:text-dark-ink">
+        {entry.score * POINTS_PER_SQUARE} pts
+      </span>
+    </div>
+  );
+})}
             </div>
           </div>
         )}
@@ -344,6 +357,14 @@ export default function Bingo() {
             ) : (
               <p className="label-tag flex flex-wrap items-center gap-2 text-lab-700 dark:text-lab-500">
                 Playing as {card.name} · {filledCount}/{SQUARES.length} squares · {points}/{MAX_POINTS} pts
+                <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-lab-100 dark:bg-dark-surface">
+  <motion.div
+    className="h-full bg-coral-500"
+    initial={{ width: 0 }}
+    animate={{ width: `${(filledCount / SQUARES.length) * 100}%` }}
+    transition={{ duration: 0.5, ease: "easeOut" }}
+  />
+</div>
                 <button
                   type="button"
                   onClick={() => {
