@@ -85,7 +85,7 @@ export default function Bingo() {
   function openSquare(index) {
     if (index === 12) return;
     setActiveSquare(index);
-    setInputValue(card.filled_squares[index] || "");
+    setInputValue((card.filled_squares || {})[index] || "");
   }
 
   async function submitSquare(e) {
@@ -138,7 +138,7 @@ export default function Bingo() {
 
   if (loading) return null;
 
-  const filledCount = card ? Object.keys(card.filled_squares).length : 0;
+  const filledCount = card ? Object.keys(card.filled_squares || {}).length : 0;
   const points = filledCount * POINTS_PER_SQUARE;
 
   return (
@@ -248,7 +248,7 @@ export default function Bingo() {
 
               <div className="grid grid-cols-5">
                 {SQUARES.map((sq, i) => {
-                  const filledName = card.filled_squares[i];
+                  const filledName = (card.filled_squares || {})[i];
                   const isFree = i === 12;
                   return (
                     <button
@@ -310,7 +310,7 @@ export default function Bingo() {
                     >
                       Cancel
                     </button>
-                    {card.filled_squares[activeSquare] && (
+                    {(card.filled_squares || {})[activeSquare] && (
                       <button
                         type="button"
                         onClick={clearSquare}
