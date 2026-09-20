@@ -12,7 +12,7 @@ import CurrentStudents from "./components/CurrentStudents";
 import Events from "./components/Events";
 import Bingo from "./components/Bingo";
 import Quiz from "./components/Quiz";
-import SpeedRound from "./components/Speedround";
+import SpeedRound from "./components/SpeedRound";
 import Moments from "./components/Moments";
 import Alumni from "./components/Alumni";
 import Committee from "./components/Committee";
@@ -23,8 +23,6 @@ import Reveal from "./components/Reveal";
 import useDarkMode from "./hooks/useDarkMode";
 import ChatWidget from "./components/ChatWidget";
 import AdminPortal from "./components/AdminPortal";
-import Auditbanner from "./components/Auditbanner";
-import NotifyOptin from "./components/Notifyoptin";
 
 export default function App() {
   const [dark, setDark] = useDarkMode();
@@ -86,7 +84,6 @@ export default function App() {
             </Reveal>
             <Reveal>
               <Bingo />
-              <NotifyOptin playerName={card?.name} />
             </Reveal>
             <Reveal>
               <Quiz />
@@ -101,8 +98,6 @@ export default function App() {
       <Footer />
       <ChatWidget />
       <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
-      <Auditbanner />
-
       <Analytics />
     </div>
   );
