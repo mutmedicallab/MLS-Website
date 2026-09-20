@@ -24,7 +24,7 @@ import useDarkMode from "./hooks/useDarkMode";
 import ChatWidget from "./components/ChatWidget";
 import AdminPortal from "./components/AdminPortal";
 import Auditbanner from "./components/Auditbanner";
-import NotifyOptIn from "./NotifyOptIn";
+import NotifyOptin from "./components/Notifyoptin";
 
 export default function App() {
   const [dark, setDark] = useDarkMode();
@@ -86,7 +86,7 @@ export default function App() {
             </Reveal>
             <Reveal>
               <Bingo />
-              <NotifyOptIn playerName={card?.name} />
+              <NotifyOptin playerName={card?.name} />
             </Reveal>
             <Reveal>
               <Quiz />
