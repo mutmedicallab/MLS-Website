@@ -92,6 +92,7 @@ export default function Bingo() {
   const [justFilledIndex, setJustFilledIndex] = useState(null);
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState("");
+  const [toast, setToast] = useState(null);
 
   useEffect(() => {
     const savedId = localStorage.getItem("mutmlsa_bingo_card_id");
@@ -122,6 +123,29 @@ export default function Bingo() {
       return () => clearTimeout(t);
     }
   }, [justFilledIndex]);
+
+  useEffect(() => {
+  if (!card || leaderboard.length === 0) return;
+
+  const myIndex = leaderboard.findIndex((e) => e.id === card.id);
+  if (myIndex === -1) return;
+
+  const myRank = myIndex + 1;
+  const key = `mutmlsa_bingo_last_rank_${card.id}`;
+  const lastRank = localStorage.getItem(key);
+
+  if (lastRank && Number(lastRank) < myRank) {
+    setToast("You've been overtaken on the leaderboard — jump back in!");
+  }
+  localStorage.setItem(key, myRank);
+}, [leaderboard, card]);
+
+useEffect(() => {
+  if (toast) {
+    const t = setTimeout(() => setToast(null), 5000);
+    return () => clearTimeout(t);
+  }
+}, [toast]);
 
   function loadLeaderboard() {
     fetch(`${API_BASE_URL}/api/bingo/leaderboard`)
@@ -222,7 +246,21 @@ export default function Bingo() {
   const points = filledCount * POINTS_PER_SQUARE;
 
   return (
-    <section id="bingo" className="border-t border-ink/10 py-20 dark:border-dark-border md:py-28">
+  <section id="bingo" className="border-t border-ink/10 py-20 dark:border-dark-border md:py-28">
+    <AnimatePresence>
+      {toast && (
+        <motion.div
+          initial={{ opacity: 0, y: -12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -12 }}
+          className="fixed left-1/2 top-4 z-[120] -translate-x-1/2 rounded-sm bg-lab-900 px-4 py-2 text-sm text-paper shadow-lg"
+        >
+          {toast}
+        </motion.div>
+      )}
+    </AnimatePresence>
+
+    
       <div className="mx-auto max-w-2xl px-5 md:px-8">
         <span className="label-tag text-lab-700 dark:text-lab-500">This week's challenge</span>
         <h2 className="mt-3 font-display text-3xl font-semibold text-lab-900 md:text-4xl dark:text-dark-ink">
