@@ -273,6 +273,28 @@ useEffect(() => {
 >
   Test Push Subscribe
 </button>
+<button
+  type="button"
+  onClick={async () => {
+    const res = await fetch(`${API_BASE_URL}/api/notify/send`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-password": "YOUR_ADMIN_PASSWORD",
+      },
+      body: JSON.stringify({
+        title: "Test notification",
+        body: "If you see this, push works!",
+        url: "/",
+      }),
+    });
+    const data = await res.json();
+    alert(JSON.stringify(data));
+  }}
+  className="mx-5 mt-2 rounded-sm border border-coral-500 px-3 py-1.5 text-xs font-semibold text-coral-600"
+>
+  Test Send Notification
+</button>
 
     
       <div className="mx-auto max-w-2xl px-5 md:px-8">
