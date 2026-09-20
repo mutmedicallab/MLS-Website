@@ -3,7 +3,7 @@ import { AUDIT_VISIBLE_UNTIL, AUDIT_PDF_URL } from "../utils/auditContext";
 // Shows a dismissible-by-time banner linking to the audit PDF. Renders
 // nothing once AUDIT_VISIBLE_UNTIL has passed — no manual cleanup needed
 // after the ~week window closes.
-export default function AuditBanner() {
+export default function Auditbanner() {
   if (new Date() > AUDIT_VISIBLE_UNTIL) return null;
 
   return (

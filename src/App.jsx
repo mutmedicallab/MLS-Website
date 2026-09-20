@@ -100,6 +100,7 @@ export default function App() {
       <ChatWidget />
       <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
       <Auditbanner />
+
       <Analytics />
     </div>
   );
