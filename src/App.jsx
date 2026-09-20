@@ -11,6 +11,8 @@ import Cohorts from "./components/Cohorts";
 import CurrentStudents from "./components/CurrentStudents";
 import Events from "./components/Events";
 import Bingo from "./components/Bingo";
+import Quiz from "./components/Quiz";
+import SpeedRound from "./components/Speedround";
 import Moments from "./components/Moments";
 import Alumni from "./components/Alumni";
 import Committee from "./components/Committee";
@@ -21,6 +23,7 @@ import Reveal from "./components/Reveal";
 import useDarkMode from "./hooks/useDarkMode";
 import ChatWidget from "./components/ChatWidget";
 import AdminPortal from "./components/AdminPortal";
+import Auditbanner from "./components/Auditbanner";
 
 export default function App() {
   const [dark, setDark] = useDarkMode();
@@ -83,6 +86,12 @@ export default function App() {
             <Reveal>
               <Bingo />
             </Reveal>
+            <Reveal>
+              <Quiz />
+            </Reveal>
+            <Reveal>
+              <SpeedRound />
+            </Reveal>
           </>
         )}
       </main>
@@ -90,6 +99,7 @@ export default function App() {
       <Footer />
       <ChatWidget />
       <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Auditbanner />
       <Analytics />
     </div>
   );
