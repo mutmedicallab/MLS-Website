@@ -12,7 +12,7 @@ import CurrentStudents from "./components/CurrentStudents";
 import Events from "./components/Events";
 import Bingo from "./components/Bingo";
 import Quiz from "./components/Quiz";
-import SpeedRound from "./components/SpeedRound";
+import Speedround from "./components/Speedround";
 import Moments from "./components/Moments";
 import Alumni from "./components/Alumni";
 import Committee from "./components/Committee";
@@ -89,7 +89,7 @@ export default function App() {
               <Quiz />
             </Reveal>
             <Reveal>
-              <SpeedRound />
+              <Speedround />
             </Reveal>
           </>
         )}
