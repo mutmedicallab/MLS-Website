@@ -12,7 +12,7 @@ const WEEK_ID = "2026-W39";
 const QUESTIONS = [
   {
     type: "image_id",
-    imageUrl: "/quiz/plasmodium-falciparum.jpg",
+    imageUrl: "/quiz/plasmodium-falciparum.png",
     prompt: "What organism is shown in this blood smear?",
     options: [
       "Plasmodium falciparum",
