@@ -259,6 +259,20 @@ useEffect(() => {
         </motion.div>
       )}
     </AnimatePresence>
+    <button
+  type="button"
+  onClick={async () => {
+    const { subscribeToPush } = await import("../utils/pushNotifications");
+    try {
+      await subscribeToPush("Test Name");
+      alert("Subscribed!");
+    } catch (err) {
+      alert("Error: " + err.message);
+    }
+  }}
+>
+  Test Push Subscribe
+</button>
 
     
       <div className="mx-auto max-w-2xl px-5 md:px-8">
