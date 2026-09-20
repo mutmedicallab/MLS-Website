@@ -280,7 +280,7 @@ useEffect(() => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-admin-password": "YOUR_ADMIN_PASSWORD",
+        "x-admin-password": "changeMe",
       },
       body: JSON.stringify({
         title: "Test notification",
