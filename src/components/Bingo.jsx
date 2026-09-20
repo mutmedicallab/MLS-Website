@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import confetti from "canvas-confetti";
 import { API_BASE_URL } from "../config/api";
+import NotifyOptIn from "./Notifyoptin";
 
 const POINTS_PER_SQUARE = 10;
 const HEADER_LETTERS = ["B", "I", "N", "G", "O"];
@@ -416,7 +417,7 @@ useEffect(() => {
                 </button>
               </p>
             )}
-
+            <NotifyOptIn playerName={card.name} />
             <div className="mt-4 overflow-hidden rounded-sm border border-ink/10 dark:border-dark-border">
               <div className="grid grid-cols-5 bg-lab-900">
                 {HEADER_LETTERS.map((letter) => (
