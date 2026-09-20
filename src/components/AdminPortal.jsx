@@ -4,8 +4,6 @@ import { API_BASE_URL } from "../config/api";
 const CURRENT_PERIOD = { academicYear: "2026/2027", semester: "Sem 1" };
 const YEAR_ORDER = ["Y1", "Y2", "Y3", "Y4"];
 
-// Normalizes a Kenyan phone number into the international format WhatsApp
-// needs: strips non-digits, then converts a leading 0 to 254 if present.
 function toWhatsAppNumber(phone) {
   const digits = phone.replace(/\D/g, "");
   if (digits.startsWith("0")) {
@@ -28,6 +26,11 @@ export default function AdminPortal() {
   const [loading, setLoading] = useState(false);
   const [confirmingId, setConfirmingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+
+  const [notifyTitle, setNotifyTitle] = useState("");
+  const [notifyBody, setNotifyBody] = useState("");
+  const [notifySending, setNotifySending] = useState(false);
+  const [notifyResult, setNotifyResult] = useState("");
 
   async function authedFetch(path, options = {}) {
     const res = await fetch(`${API_BASE_URL}${path}`, {
@@ -107,6 +110,31 @@ export default function AdminPortal() {
     loadData();
   }
 
+  async function sendNotification(e) {
+    e.preventDefault();
+    if (!notifyTitle.trim() || !notifyBody.trim()) return;
+    setNotifySending(true);
+    setNotifyResult("");
+    try {
+      const res = await authedFetch("/api/notify/send", {
+        method: "POST",
+        body: JSON.stringify({ title: notifyTitle.trim(), body: notifyBody.trim() }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setNotifyResult("Sent!");
+        setNotifyTitle("");
+        setNotifyBody("");
+      } else {
+        setNotifyResult(data.error || "Failed to send.");
+      }
+    } catch (err) {
+      setNotifyResult(err.message || "Failed to send.");
+    } finally {
+      setNotifySending(false);
+    }
+  }
+
   if (!authed) {
     return (
       <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-5">
@@ -178,8 +206,8 @@ export default function AdminPortal() {
                   {app.phone && (
                     <>
                       {" · "}
-                      
-                        <a href={`https://wa.me/${toWhatsAppNumber(app.phone)}`}
+                      <a
+                        href={`https://wa.me/${toWhatsAppNumber(app.phone)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-lab-700 underline dark:text-lab-500"
@@ -272,14 +300,14 @@ export default function AdminPortal() {
             Add all members to list
           </button>
           <button
-           type="button"
-           onClick={async () => {
-            const res = await authedFetch("/api/newsletter/backfill-applications", { method: "POST" });
-            const data = await res.json();
-            alert(`Added ${data.added ?? 0} new subscribers from applications (including unconfirmed).`);
-            loadData();
-           }}
-           className="rounded-sm border border-lab-700 px-4 py-2 text-sm font-semibold text-lab-700 dark:border-lab-500 dark:text-lab-500"
+            type="button"
+            onClick={async () => {
+              const res = await authedFetch("/api/newsletter/backfill-applications", { method: "POST" });
+              const data = await res.json();
+              alert(`Added ${data.added ?? 0} new subscribers from applications (including unconfirmed).`);
+              loadData();
+            }}
+            className="rounded-sm border border-lab-700 px-4 py-2 text-sm font-semibold text-lab-700 dark:border-lab-500 dark:text-lab-500"
           >
             Add all applicants to list
           </button>
@@ -294,6 +322,41 @@ export default function AdminPortal() {
             </p>
           ))}
         </div>
+      </section>
+
+      <section className="mt-10">
+        <h2 className="font-display text-lg font-semibold text-lab-900 dark:text-dark-ink">
+          Send Push Notification
+        </h2>
+        <p className="mt-1 text-sm text-ink-soft dark:text-dark-ink-soft">
+          Goes out immediately to everyone who's opted into game notifications.
+        </p>
+        <form onSubmit={sendNotification} className="mt-3 max-w-sm space-y-2">
+          <input
+            type="text"
+            value={notifyTitle}
+            onChange={(e) => setNotifyTitle(e.target.value)}
+            placeholder="Title (e.g. New Bingo card is live!)"
+            className="w-full rounded-sm border border-ink/15 bg-transparent px-3 py-2 text-sm dark:border-dark-border dark:text-dark-ink"
+          />
+          <textarea
+            value={notifyBody}
+            onChange={(e) => setNotifyBody(e.target.value)}
+            placeholder="Message body"
+            rows={3}
+            className="w-full rounded-sm border border-ink/15 bg-transparent px-3 py-2 text-sm dark:border-dark-border dark:text-dark-ink"
+          />
+          <button
+            type="submit"
+            disabled={notifySending}
+            className="rounded-sm bg-coral-500 px-4 py-2 text-sm font-semibold text-paper disabled:opacity-50"
+          >
+            {notifySending ? "Sending…" : "Send to all subscribers"}
+          </button>
+          {notifyResult && (
+            <p className="text-sm text-lab-700 dark:text-lab-500">{notifyResult}</p>
+          )}
+        </form>
       </section>
     </div>
   );
@@ -318,8 +381,8 @@ function MemberYearGroup({ label, members, onToggleRegistration, onTogglePayment
                 {m.phone && (
                   <>
                     {" · "}
-                    
-                      <a href={`https://wa.me/${toWhatsAppNumber(m.phone)}`}
+                    <a
+                      href={`https://wa.me/${toWhatsAppNumber(m.phone)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-lab-700 underline dark:text-lab-500"
