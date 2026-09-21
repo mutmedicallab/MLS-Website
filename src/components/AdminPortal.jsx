@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import { API_BASE_URL } from "../config/api";
 
 const CURRENT_PERIOD = { academicYear: "2026/2027", semester: "Sem 1" };
@@ -15,6 +16,11 @@ function toWhatsAppNumber(phone) {
   return digits;
 }
 
+const sectionVariants = {
+  hidden: { opacity: 0, y: 16 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.35 } },
+};
+
 export default function AdminPortal() {
   const [password, setPassword] = useState("");
   const [authed, setAuthed] = useState(false);
@@ -26,9 +32,11 @@ export default function AdminPortal() {
   const [loading, setLoading] = useState(false);
   const [confirmingId, setConfirmingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [subscriberSearch, setSubscriberSearch] = useState("");
 
   const [notifyTitle, setNotifyTitle] = useState("");
   const [notifyBody, setNotifyBody] = useState("");
+  const [notifyImage, setNotifyImage] = useState("");
   const [notifySending, setNotifySending] = useState(false);
   const [notifyResult, setNotifyResult] = useState("");
 
@@ -118,13 +126,18 @@ export default function AdminPortal() {
     try {
       const res = await authedFetch("/api/notify/send", {
         method: "POST",
-        body: JSON.stringify({ title: notifyTitle.trim(), body: notifyBody.trim() }),
+        body: JSON.stringify({
+          title: notifyTitle.trim(),
+          body: notifyBody.trim(),
+          image: notifyImage.trim() || undefined,
+        }),
       });
       const data = await res.json();
       if (data.ok) {
         setNotifyResult("Sent!");
         setNotifyTitle("");
         setNotifyBody("");
+        setNotifyImage("");
       } else {
         setNotifyResult(data.error || "Failed to send.");
       }
@@ -137,7 +150,12 @@ export default function AdminPortal() {
 
   if (!authed) {
     return (
-      <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-5">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+        className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-5"
+      >
         <h1 className="font-display text-2xl font-semibold text-lab-900 dark:text-dark-ink">
           Admin Portal
         </h1>
@@ -151,16 +169,17 @@ export default function AdminPortal() {
           className="mt-4 rounded-sm border border-ink/15 bg-transparent px-3 py-2 text-sm dark:border-dark-border dark:text-dark-ink"
           placeholder="Admin password"
         />
-        <button
+        <motion.button
+          whileTap={{ scale: 0.97 }}
           type="button"
           onClick={loadData}
           disabled={loading}
           className="mt-3 rounded-sm bg-lab-800 px-4 py-2 text-sm font-semibold text-paper disabled:opacity-50"
         >
           {loading ? "Checking…" : "Enter"}
-        </button>
+        </motion.button>
         {error && <p className="mt-3 text-sm text-coral-600">{error}</p>}
-      </div>
+      </motion.div>
     );
   }
 
@@ -177,16 +196,38 @@ export default function AdminPortal() {
     (m) => !YEAR_ORDER.includes(m.year_of_study)
   );
 
+  const sortedSubscribers = [...subscribers].sort((a, b) => {
+    const nameA = a.full_name || a.email;
+    const nameB = b.full_name || b.email;
+    return nameA.localeCompare(nameB);
+  });
+
+  const filteredSubscribers = sortedSubscribers.filter((s) => {
+    const term = subscriberSearch.toLowerCase();
+    return (
+      (s.full_name || "").toLowerCase().includes(term) ||
+      s.email.toLowerCase().includes(term)
+    );
+  });
+
   return (
     <div className="mx-auto max-w-4xl px-5 py-12">
-      <h1 className="font-display text-2xl font-semibold text-lab-900 dark:text-dark-ink">
-        Admin Portal
-      </h1>
-      <p className="mt-1 text-sm text-ink-soft dark:text-dark-ink-soft">
-        Tracking {CURRENT_PERIOD.semester} · {CURRENT_PERIOD.academicYear}
-      </p>
+      <motion.div initial="hidden" animate="visible" variants={sectionVariants}>
+        <h1 className="font-display text-2xl font-semibold text-lab-900 dark:text-dark-ink">
+          Admin Portal
+        </h1>
+        <p className="mt-1 text-sm text-ink-soft dark:text-dark-ink-soft">
+          Tracking {CURRENT_PERIOD.semester} · {CURRENT_PERIOD.academicYear}
+        </p>
+      </motion.div>
 
-      <section className="mt-10">
+      <motion.section
+        initial="hidden"
+        animate="visible"
+        variants={sectionVariants}
+        transition={{ delay: 0.05 }}
+        className="mt-10"
+      >
         <h2 className="font-display text-lg font-semibold text-lab-900 dark:text-dark-ink">
           Pending Applications ({applications.length})
         </h2>
@@ -194,44 +235,56 @@ export default function AdminPortal() {
           {applications.length === 0 && (
             <p className="text-sm text-ink-soft dark:text-dark-ink-soft">No pending applications.</p>
           )}
-          {applications.map((app) => (
-            <div
-              key={app.id}
-              className="flex items-center justify-between rounded-sm border border-ink/10 p-3 dark:border-dark-border"
-            >
-              <div>
-                <p className="text-sm font-semibold text-lab-900 dark:text-dark-ink">{app.full_name}</p>
-                <p className="text-xs text-ink-soft dark:text-dark-ink-soft">
-                  {app.email} · {app.year_of_study || "Year unknown"}
-                  {app.phone && (
-                    <>
-                      {" · "}
-                      <a
-                        href={`https://wa.me/${toWhatsAppNumber(app.phone)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-lab-700 underline dark:text-lab-500"
-                      >
-                        {app.phone}
-                      </a>
-                    </>
-                  )}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => confirmApplication(app)}
-                disabled={confirmingId === app.id}
-                className="rounded-sm bg-lab-800 px-3 py-1.5 text-xs font-semibold text-paper disabled:opacity-50"
+          <AnimatePresence>
+            {applications.map((app) => (
+              <motion.div
+                key={app.id}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 8 }}
+                className="flex items-center justify-between rounded-sm border border-ink/10 p-3 dark:border-dark-border"
               >
-                {confirmingId === app.id ? "Confirming…" : "Confirm as member"}
-              </button>
-            </div>
-          ))}
+                <div>
+                  <p className="text-sm font-semibold text-lab-900 dark:text-dark-ink">{app.full_name}</p>
+                  <p className="text-xs text-ink-soft dark:text-dark-ink-soft">
+                    {app.email} · {app.year_of_study || "Year unknown"}
+                    {app.phone && (
+                      <>
+                        {" · "}
+                        <a
+                          href={`https://wa.me/${toWhatsAppNumber(app.phone)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-lab-700 underline dark:text-lab-500"
+                        >
+                          {app.phone}
+                        </a>
+                      </>
+                    )}
+                  </p>
+                </div>
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  type="button"
+                  onClick={() => confirmApplication(app)}
+                  disabled={confirmingId === app.id}
+                  className="rounded-sm bg-lab-800 px-3 py-1.5 text-xs font-semibold text-paper disabled:opacity-50"
+                >
+                  {confirmingId === app.id ? "Confirming…" : "Confirm as member"}
+                </motion.button>
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
-      </section>
+      </motion.section>
 
-      <section className="mt-10">
+      <motion.section
+        initial="hidden"
+        animate="visible"
+        variants={sectionVariants}
+        transition={{ delay: 0.1 }}
+        className="mt-10"
+      >
         <h2 className="font-display text-lg font-semibold text-lab-900 dark:text-dark-ink">
           Members ({members.length})
         </h2>
@@ -269,14 +322,21 @@ export default function AdminPortal() {
             />
           )}
         </div>
-      </section>
+      </motion.section>
 
-      <section className="mt-10">
+      <motion.section
+        initial="hidden"
+        animate="visible"
+        variants={sectionVariants}
+        transition={{ delay: 0.15 }}
+        className="mt-10"
+      >
         <h2 className="font-display text-lg font-semibold text-lab-900 dark:text-dark-ink">
           Newsletter Subscribers ({subscribers.length})
         </h2>
         <div className="mt-3 flex flex-wrap gap-2">
-          <button
+          <motion.button
+            whileTap={{ scale: 0.97 }}
             type="button"
             onClick={() => {
               const emails = subscribers.map((s) => s.email).join(", ");
@@ -286,8 +346,9 @@ export default function AdminPortal() {
             className="rounded-sm bg-lab-800 px-4 py-2 text-sm font-semibold text-paper dark:bg-lab-600"
           >
             Copy all emails
-          </button>
-          <button
+          </motion.button>
+          <motion.button
+            whileTap={{ scale: 0.97 }}
             type="button"
             onClick={async () => {
               const res = await authedFetch("/api/newsletter/backfill", { method: "POST" });
@@ -298,8 +359,9 @@ export default function AdminPortal() {
             className="rounded-sm border border-lab-700 px-4 py-2 text-sm font-semibold text-lab-700 dark:border-lab-500 dark:text-lab-500"
           >
             Add all members to list
-          </button>
-          <button
+          </motion.button>
+          <motion.button
+            whileTap={{ scale: 0.97 }}
             type="button"
             onClick={async () => {
               const res = await authedFetch("/api/newsletter/backfill-applications", { method: "POST" });
@@ -310,33 +372,65 @@ export default function AdminPortal() {
             className="rounded-sm border border-lab-700 px-4 py-2 text-sm font-semibold text-lab-700 dark:border-lab-500 dark:text-lab-500"
           >
             Add all applicants to list
-          </button>
+          </motion.button>
         </div>
-        <div className="mt-3 space-y-1">
-          {subscribers.length === 0 && (
-            <p className="text-sm text-ink-soft dark:text-dark-ink-soft">No subscribers yet.</p>
-          )}
-          {subscribers.map((s) => (
-            <p key={s.id} className="text-xs text-ink-soft dark:text-dark-ink-soft">
-              {s.full_name ? `${s.full_name} — ` : ""}{s.email}
-            </p>
-          ))}
-        </div>
-      </section>
 
-      <section className="mt-10">
+        <input
+          type="text"
+          value={subscriberSearch}
+          onChange={(e) => setSubscriberSearch(e.target.value)}
+          placeholder="Search subscribers by name or email…"
+          className="mt-4 w-full max-w-xs rounded-sm border border-ink/15 bg-transparent px-3 py-2 text-sm dark:border-dark-border dark:text-dark-ink"
+        />
+
+        <div className="mt-3 overflow-hidden rounded-sm border border-ink/10 dark:border-dark-border">
+          {filteredSubscribers.length === 0 ? (
+            <p className="p-4 text-sm text-ink-soft dark:text-dark-ink-soft">
+              {subscribers.length === 0 ? "No subscribers yet." : "No subscribers match that search."}
+            </p>
+          ) : (
+            <div className="divide-y divide-ink/10 dark:divide-dark-border">
+              {filteredSubscribers.map((s, i) => (
+                <motion.div
+                  key={s.id}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.2, delay: Math.min(i * 0.015, 0.3) }}
+                  className={`flex flex-col gap-0.5 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between ${
+                    i % 2 === 0 ? "bg-lab-50/40 dark:bg-dark-surface/30" : ""
+                  }`}
+                >
+                  <span className="text-sm font-medium text-lab-900 dark:text-dark-ink">
+                    {s.full_name || "—"}
+                  </span>
+                  <span className="text-xs text-ink-soft dark:text-dark-ink-soft">{s.email}</span>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </div>
+      </motion.section>
+
+      <motion.section
+        initial="hidden"
+        animate="visible"
+        variants={sectionVariants}
+        transition={{ delay: 0.2 }}
+        className="mt-10"
+      >
         <h2 className="font-display text-lg font-semibold text-lab-900 dark:text-dark-ink">
           Send Push Notification
         </h2>
         <p className="mt-1 text-sm text-ink-soft dark:text-dark-ink-soft">
-          Goes out immediately to everyone who's opted into game notifications.
+          Goes out immediately to everyone who's turned on notifications — games,
+          events, new photos, or any other update.
         </p>
         <form onSubmit={sendNotification} className="mt-3 max-w-sm space-y-2">
           <input
             type="text"
             value={notifyTitle}
             onChange={(e) => setNotifyTitle(e.target.value)}
-            placeholder="Title (e.g. New Bingo card is live!)"
+            placeholder="Title (e.g. New photos are up!)"
             className="w-full rounded-sm border border-ink/15 bg-transparent px-3 py-2 text-sm dark:border-dark-border dark:text-dark-ink"
           />
           <textarea
@@ -346,18 +440,26 @@ export default function AdminPortal() {
             rows={3}
             className="w-full rounded-sm border border-ink/15 bg-transparent px-3 py-2 text-sm dark:border-dark-border dark:text-dark-ink"
           />
-          <button
+          <input
+            type="text"
+            value={notifyImage}
+            onChange={(e) => setNotifyImage(e.target.value)}
+            placeholder="Image URL (optional — preview photo)"
+            className="w-full rounded-sm border border-ink/15 bg-transparent px-3 py-2 text-sm dark:border-dark-border dark:text-dark-ink"
+          />
+          <motion.button
+            whileTap={{ scale: 0.97 }}
             type="submit"
             disabled={notifySending}
             className="rounded-sm bg-coral-500 px-4 py-2 text-sm font-semibold text-paper disabled:opacity-50"
           >
             {notifySending ? "Sending…" : "Send to all subscribers"}
-          </button>
+          </motion.button>
           {notifyResult && (
             <p className="text-sm text-lab-700 dark:text-lab-500">{notifyResult}</p>
           )}
         </form>
-      </section>
+      </motion.section>
     </div>
   );
 }
@@ -370,8 +472,11 @@ function MemberYearGroup({ label, members, onToggleRegistration, onTogglePayment
       </h3>
       <div className="space-y-2">
         {members.map((m) => (
-          <div
+          <motion.div
             key={m.id}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2 }}
             className="flex flex-col gap-2 rounded-sm border border-ink/10 p-3 dark:border-dark-border sm:flex-row sm:items-center sm:justify-between"
           >
             <div>
@@ -394,7 +499,8 @@ function MemberYearGroup({ label, members, onToggleRegistration, onTogglePayment
               </p>
             </div>
             <div className="flex gap-2">
-              <button
+              <motion.button
+                whileTap={{ scale: 0.95 }}
                 type="button"
                 onClick={() => onToggleRegistration(m)}
                 className={`rounded-sm px-3 py-1.5 text-xs font-semibold ${
@@ -404,8 +510,9 @@ function MemberYearGroup({ label, members, onToggleRegistration, onTogglePayment
                 }`}
               >
                 {m.registration_paid ? "Registration ✓" : "Registration unpaid"}
-              </button>
-              <button
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.95 }}
                 type="button"
                 onClick={() => onTogglePayment(m)}
                 className={`rounded-sm px-3 py-1.5 text-xs font-semibold ${
@@ -415,9 +522,9 @@ function MemberYearGroup({ label, members, onToggleRegistration, onTogglePayment
                 }`}
               >
                 {m.paidThisPeriod ? "Semester Paid ✓" : "Mark semester paid"}
-              </button>
+              </motion.button>
             </div>
-          </div>
+          </motion.div>
         ))}
       </div>
     </div>
