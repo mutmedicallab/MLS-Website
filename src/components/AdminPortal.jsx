@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence, Reorder } from "motion/react";
 import { API_BASE_URL } from "../config/api";
 
 const CURRENT_PERIOD = { academicYear: "2026/2027", semester: "Sem 1" };
@@ -33,6 +33,12 @@ export default function AdminPortal() {
   const [confirmingId, setConfirmingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [subscriberSearch, setSubscriberSearch] = useState("");
+  const [sectionOrder, setSectionOrder] = useState([
+    "applications",
+    "members",
+    "subscribers",
+    "notify",
+  ]);
 
   const [notifyTitle, setNotifyTitle] = useState("");
   const [notifyBody, setNotifyBody] = useState("");
@@ -60,7 +66,9 @@ export default function AdminPortal() {
       const [appsRes, membersRes, subsRes] = await Promise.all([
         authedFetch("/api/admin/members/pending-applications"),
         authedFetch(
-          `/api/admin/members?academicYear=${encodeURIComponent(CURRENT_PERIOD.academicYear)}&semester=${encodeURIComponent(CURRENT_PERIOD.semester)}`
+          `/api/admin/members?academicYear=${encodeURIComponent(
+            CURRENT_PERIOD.academicYear
+          )}&semester=${encodeURIComponent(CURRENT_PERIOD.semester)}`
         ),
         authedFetch("/api/newsletter"),
       ]);
@@ -210,6 +218,51 @@ export default function AdminPortal() {
     );
   });
 
+  const sectionComponents = {
+    applications: (
+      <ApplicationsSection
+        applications={applications}
+        confirmingId={confirmingId}
+        onConfirm={confirmApplication}
+      />
+    ),
+    members: (
+      <MembersSection
+        members={members}
+        filteredMembers={filteredMembers}
+        groupedMembers={groupedMembers}
+        otherMembers={otherMembers}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        onToggleRegistration={toggleRegistration}
+        onTogglePayment={togglePayment}
+      />
+    ),
+    subscribers: (
+      <SubscribersSection
+        subscribers={subscribers}
+        filteredSubscribers={filteredSubscribers}
+        subscriberSearch={subscriberSearch}
+        setSubscriberSearch={setSubscriberSearch}
+        authedFetch={authedFetch}
+        loadData={loadData}
+      />
+    ),
+    notify: (
+      <NotifySection
+        notifyTitle={notifyTitle}
+        setNotifyTitle={setNotifyTitle}
+        notifyBody={notifyBody}
+        setNotifyBody={setNotifyBody}
+        notifyImage={notifyImage}
+        setNotifyImage={setNotifyImage}
+        notifySending={notifySending}
+        notifyResult={notifyResult}
+        onSubmit={sendNotification}
+      />
+    ),
+  };
+
   return (
     <div className="mx-auto max-w-4xl px-5 py-12">
       <motion.div initial="hidden" animate="visible" variants={sectionVariants}>
@@ -221,250 +274,307 @@ export default function AdminPortal() {
         </p>
       </motion.div>
 
-      <motion.section
-        initial="hidden"
-        animate="visible"
-        variants={sectionVariants}
-        transition={{ delay: 0.05 }}
-        className="mt-10"
+      <Reorder.Group
+        axis="y"
+        values={sectionOrder}
+        onReorder={setSectionOrder}
+        className="mt-10 space-y-6"
       >
-        <h2 className="font-display text-lg font-semibold text-lab-900 dark:text-dark-ink">
-          Pending Applications ({applications.length})
-        </h2>
-        <div className="mt-3 space-y-2">
-          {applications.length === 0 && (
-            <p className="text-sm text-ink-soft dark:text-dark-ink-soft">No pending applications.</p>
-          )}
-          <AnimatePresence>
-            {applications.map((app) => (
-              <motion.div
-                key={app.id}
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 8 }}
-                className="flex items-center justify-between rounded-sm border border-ink/10 p-3 dark:border-dark-border"
-              >
-                <div>
-                  <p className="text-sm font-semibold text-lab-900 dark:text-dark-ink">{app.full_name}</p>
-                  <p className="text-xs text-ink-soft dark:text-dark-ink-soft">
-                    {app.email} · {app.year_of_study || "Year unknown"}
-                    {app.phone && (
-                      <>
-                        {" · "}
-                        <a
-                          href={`https://wa.me/${toWhatsAppNumber(app.phone)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-lab-700 underline dark:text-lab-500"
-                        >
-                          {app.phone}
-                        </a>
-                      </>
-                    )}
-                  </p>
-                </div>
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  type="button"
-                  onClick={() => confirmApplication(app)}
-                  disabled={confirmingId === app.id}
-                  className="rounded-sm bg-lab-800 px-3 py-1.5 text-xs font-semibold text-paper disabled:opacity-50"
-                >
-                  {confirmingId === app.id ? "Confirming…" : "Confirm as member"}
-                </motion.button>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
-      </motion.section>
-
-      <motion.section
-        initial="hidden"
-        animate="visible"
-        variants={sectionVariants}
-        transition={{ delay: 0.1 }}
-        className="mt-10"
-      >
-        <h2 className="font-display text-lg font-semibold text-lab-900 dark:text-dark-ink">
-          Members ({members.length})
-        </h2>
-        <input
-          type="text"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Search by name…"
-          className="mt-3 w-full max-w-xs rounded-sm border border-ink/15 bg-transparent px-3 py-2 text-sm dark:border-dark-border dark:text-dark-ink"
-        />
-
-        <div className="mt-3 space-y-6">
-          {filteredMembers.length === 0 && (
-            <p className="text-sm text-ink-soft dark:text-dark-ink-soft">No members match that search.</p>
-          )}
-
-          {YEAR_ORDER.map((year) =>
-            groupedMembers[year].length > 0 ? (
-              <MemberYearGroup
-                key={year}
-                label={year}
-                members={groupedMembers[year]}
-                onToggleRegistration={toggleRegistration}
-                onTogglePayment={togglePayment}
-              />
-            ) : null
-          )}
-
-          {otherMembers.length > 0 && (
-            <MemberYearGroup
-              label="Other / Unspecified"
-              members={otherMembers}
-              onToggleRegistration={toggleRegistration}
-              onTogglePayment={togglePayment}
-            />
-          )}
-        </div>
-      </motion.section>
-
-      <motion.section
-        initial="hidden"
-        animate="visible"
-        variants={sectionVariants}
-        transition={{ delay: 0.15 }}
-        className="mt-10"
-      >
-        <h2 className="font-display text-lg font-semibold text-lab-900 dark:text-dark-ink">
-          Newsletter Subscribers ({subscribers.length})
-        </h2>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <motion.button
-            whileTap={{ scale: 0.97 }}
-            type="button"
-            onClick={() => {
-              const emails = subscribers.map((s) => s.email).join(", ");
-              navigator.clipboard.writeText(emails);
-              alert("All subscriber emails copied — paste into Gmail's BCC field.");
-            }}
-            className="rounded-sm bg-lab-800 px-4 py-2 text-sm font-semibold text-paper dark:bg-lab-600"
+        {sectionOrder.map((key) => (
+          <Reorder.Item
+            key={key}
+            value={key}
+            className="cursor-grab rounded-sm border border-ink/10 bg-paper p-4 active:cursor-grabbing dark:border-dark-border dark:bg-dark-bg"
+            whileDrag={{ scale: 1.01, boxShadow: "0 8px 24px rgba(0,0,0,0.15)" }}
           >
-            Copy all emails
-          </motion.button>
-          <motion.button
-            whileTap={{ scale: 0.97 }}
-            type="button"
-            onClick={async () => {
-              const res = await authedFetch("/api/newsletter/backfill", { method: "POST" });
-              const data = await res.json();
-              alert(`Added ${data.added ?? 0} new subscribers from your members list.`);
-              loadData();
-            }}
-            className="rounded-sm border border-lab-700 px-4 py-2 text-sm font-semibold text-lab-700 dark:border-lab-500 dark:text-lab-500"
-          >
-            Add all members to list
-          </motion.button>
-          <motion.button
-            whileTap={{ scale: 0.97 }}
-            type="button"
-            onClick={async () => {
-              const res = await authedFetch("/api/newsletter/backfill-applications", { method: "POST" });
-              const data = await res.json();
-              alert(`Added ${data.added ?? 0} new subscribers from applications (including unconfirmed).`);
-              loadData();
-            }}
-            className="rounded-sm border border-lab-700 px-4 py-2 text-sm font-semibold text-lab-700 dark:border-lab-500 dark:text-lab-500"
-          >
-            Add all applicants to list
-          </motion.button>
-        </div>
-
-        <input
-          type="text"
-          value={subscriberSearch}
-          onChange={(e) => setSubscriberSearch(e.target.value)}
-          placeholder="Search subscribers by name or email…"
-          className="mt-4 w-full max-w-xs rounded-sm border border-ink/15 bg-transparent px-3 py-2 text-sm dark:border-dark-border dark:text-dark-ink"
-        />
-
-        <div className="mt-3 overflow-hidden rounded-sm border border-ink/10 dark:border-dark-border">
-          {filteredSubscribers.length === 0 ? (
-            <p className="p-4 text-sm text-ink-soft dark:text-dark-ink-soft">
-              {subscribers.length === 0 ? "No subscribers yet." : "No subscribers match that search."}
-            </p>
-          ) : (
-            <div className="divide-y divide-ink/10 dark:divide-dark-border">
-              {filteredSubscribers.map((s, i) => (
-                <motion.div
-                  key={s.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.2, delay: Math.min(i * 0.015, 0.3) }}
-                  className={`flex flex-col gap-0.5 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between ${
-                    i % 2 === 0 ? "bg-lab-50/40 dark:bg-dark-surface/30" : ""
-                  }`}
-                >
-                  <span className="text-sm font-medium text-lab-900 dark:text-dark-ink">
-                    {s.full_name || "—"}
-                  </span>
-                  <span className="text-xs text-ink-soft dark:text-dark-ink-soft">{s.email}</span>
-                </motion.div>
-              ))}
-            </div>
-          )}
-        </div>
-      </motion.section>
-
-      <motion.section
-        initial="hidden"
-        animate="visible"
-        variants={sectionVariants}
-        transition={{ delay: 0.2 }}
-        className="mt-10"
-      >
-        <h2 className="font-display text-lg font-semibold text-lab-900 dark:text-dark-ink">
-          Send Push Notification
-        </h2>
-        <p className="mt-1 text-sm text-ink-soft dark:text-dark-ink-soft">
-          Goes out immediately to everyone who's turned on notifications — games,
-          events, new photos, or any other update.
-        </p>
-        <form onSubmit={sendNotification} className="mt-3 max-w-sm space-y-2">
-          <input
-            type="text"
-            value={notifyTitle}
-            onChange={(e) => setNotifyTitle(e.target.value)}
-            placeholder="Title (e.g. New photos are up!)"
-            className="w-full rounded-sm border border-ink/15 bg-transparent px-3 py-2 text-sm dark:border-dark-border dark:text-dark-ink"
-          />
-          <textarea
-            value={notifyBody}
-            onChange={(e) => setNotifyBody(e.target.value)}
-            placeholder="Message body"
-            rows={3}
-            className="w-full rounded-sm border border-ink/15 bg-transparent px-3 py-2 text-sm dark:border-dark-border dark:text-dark-ink"
-          />
-          <input
-            type="text"
-            value={notifyImage}
-            onChange={(e) => setNotifyImage(e.target.value)}
-            placeholder="Image URL (optional — preview photo)"
-            className="w-full rounded-sm border border-ink/15 bg-transparent px-3 py-2 text-sm dark:border-dark-border dark:text-dark-ink"
-          />
-          <motion.button
-            whileTap={{ scale: 0.97 }}
-            type="submit"
-            disabled={notifySending}
-            className="rounded-sm bg-coral-500 px-4 py-2 text-sm font-semibold text-paper disabled:opacity-50"
-          >
-            {notifySending ? "Sending…" : "Send to all subscribers"}
-          </motion.button>
-          {notifyResult && (
-            <p className="text-sm text-lab-700 dark:text-lab-500">{notifyResult}</p>
-          )}
-        </form>
-      </motion.section>
+            {sectionComponents[key]}
+          </Reorder.Item>
+        ))}
+      </Reorder.Group>
     </div>
   );
 }
 
-function MemberYearGroup({ label, members, onToggleRegistration, onTogglePayment }) {
+function ApplicationsSection({ applications, confirmingId, onConfirm }) {
+  return (
+    <section>
+      <h2 className="font-display text-lg font-semibold text-lab-900 dark:text-dark-ink">
+        Pending Applications ({applications.length})
+      </h2>
+      <div className="mt-3 space-y-2">
+        {applications.length === 0 && (
+          <p className="text-sm text-ink-soft dark:text-dark-ink-soft">
+            No pending applications.
+          </p>
+        )}
+        <AnimatePresence>
+          {applications.map((app) => (
+            <motion.div
+              key={app.id}
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 8 }}
+              className="flex items-center justify-between rounded-sm border border-ink/10 p-3 dark:border-dark-border"
+            >
+              <div>
+                <p className="text-sm font-semibold text-lab-900 dark:text-dark-ink">
+                  {app.full_name}
+                </p>
+                <p className="text-xs text-ink-soft dark:text-dark-ink-soft">
+                  {app.email} · {app.year_of_study || "Year unknown"}
+                  {app.phone && (
+                    <>
+                      {" · "}
+                      <a
+                        href={`https://wa.me/${toWhatsAppNumber(app.phone)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-lab-700 underline dark:text-lab-500"
+                      >
+                        {app.phone}
+                      </a>
+                    </>
+                  )}
+                </p>
+              </div>
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                type="button"
+                onClick={() => onConfirm(app)}
+                disabled={confirmingId === app.id}
+                className="rounded-sm bg-lab-800 px-3 py-1.5 text-xs font-semibold text-paper disabled:opacity-50"
+              >
+                {confirmingId === app.id ? "Confirming…" : "Confirm as member"}
+              </motion.button>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+    </section>
+  );
+}
+
+function MembersSection({
+  members,
+  filteredMembers,
+  groupedMembers,
+  otherMembers,
+  searchTerm,
+  setSearchTerm,
+  onToggleRegistration,
+  onTogglePayment,
+}) {
+  return (
+    <section>
+      <h2 className="font-display text-lg font-semibold text-lab-900 dark:text-dark-ink">
+        Members ({members.length})
+      </h2>
+      <input
+        type="text"
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        placeholder="Search by name…"
+        className="mt-3 w-full max-w-xs rounded-sm border border-ink/15 bg-transparent px-3 py-2 text-sm dark:border-dark-border dark:text-dark-ink"
+      />
+
+      <div className="mt-3 space-y-6">
+        {filteredMembers.length === 0 && (
+          <p className="text-sm text-ink-soft dark:text-dark-ink-soft">
+            No members match that search.
+          </p>
+        )}
+
+        {YEAR_ORDER.map((year) =>
+          groupedMembers[year].length > 0 ? (
+            <MemberYearGroup
+              key={year}
+              label={year}
+              members={groupedMembers[year]}
+              onToggleRegistration={onToggleRegistration}
+              onTogglePayment={onTogglePayment}
+            />
+          ) : null
+        )}
+
+        {otherMembers.length > 0 && (
+          <MemberYearGroup
+            label="Other / Unspecified"
+            members={otherMembers}
+            onToggleRegistration={onToggleRegistration}
+            onTogglePayment={onTogglePayment}
+          />
+        )}
+      </div>
+    </section>
+  );
+}
+
+function SubscribersSection({
+  subscribers,
+  filteredSubscribers,
+  subscriberSearch,
+  setSubscriberSearch,
+  authedFetch,
+  loadData,
+}) {
+  return (
+    <section>
+      <h2 className="font-display text-lg font-semibold text-lab-900 dark:text-dark-ink">
+        Newsletter Subscribers ({subscribers.length})
+      </h2>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          type="button"
+          onClick={() => {
+            const emails = subscribers.map((s) => s.email).join(", ");
+            navigator.clipboard.writeText(emails);
+            alert("All subscriber emails copied — paste into Gmail's BCC field.");
+          }}
+          className="rounded-sm bg-lab-800 px-4 py-2 text-sm font-semibold text-paper dark:bg-lab-600"
+        >
+          Copy all emails
+        </motion.button>
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          type="button"
+          onClick={async () => {
+            const res = await authedFetch("/api/newsletter/backfill", {
+              method: "POST",
+            });
+            const data = await res.json();
+            alert(`Added ${data.added ?? 0} new subscribers from your members list.`);
+            loadData();
+          }}
+          className="rounded-sm border border-lab-700 px-4 py-2 text-sm font-semibold text-lab-700 dark:border-lab-500 dark:text-lab-500"
+        >
+          Add all members to list
+        </motion.button>
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          type="button"
+          onClick={async () => {
+            const res = await authedFetch("/api/newsletter/backfill-applications", {
+              method: "POST",
+            });
+            const data = await res.json();
+            alert(
+              `Added ${data.added ?? 0} new subscribers from applications (including unconfirmed).`
+            );
+            loadData();
+          }}
+          className="rounded-sm border border-lab-700 px-4 py-2 text-sm font-semibold text-lab-700 dark:border-lab-500 dark:text-lab-500"
+        >
+          Add all applicants to list
+        </motion.button>
+      </div>
+
+      <input
+        type="text"
+        value={subscriberSearch}
+        onChange={(e) => setSubscriberSearch(e.target.value)}
+        placeholder="Search subscribers by name or email…"
+        className="mt-4 w-full max-w-xs rounded-sm border border-ink/15 bg-transparent px-3 py-2 text-sm dark:border-dark-border dark:text-dark-ink"
+      />
+
+      <div className="mt-3 overflow-hidden rounded-sm border border-ink/10 dark:border-dark-border">
+        {filteredSubscribers.length === 0 ? (
+          <p className="p-4 text-sm text-ink-soft dark:text-dark-ink-soft">
+            {subscribers.length === 0
+              ? "No subscribers yet."
+              : "No subscribers match that search."}
+          </p>
+        ) : (
+          <div className="divide-y divide-ink/10 dark:divide-dark-border">
+            {filteredSubscribers.map((s, i) => (
+              <motion.div
+                key={s.id}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.2, delay: Math.min(i * 0.015, 0.3) }}
+                className={`flex flex-col gap-0.5 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between ${
+                  i % 2 === 0 ? "bg-lab-50/40 dark:bg-dark-surface/30" : ""
+                }`}
+              >
+                <span className="text-sm font-medium text-lab-900 dark:text-dark-ink">
+                  {s.full_name || "—"}
+                </span>
+                <span className="text-xs text-ink-soft dark:text-dark-ink-soft">
+                  {s.email}
+                </span>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function NotifySection({
+  notifyTitle,
+  setNotifyTitle,
+  notifyBody,
+  setNotifyBody,
+  notifyImage,
+  setNotifyImage,
+  notifySending,
+  notifyResult,
+  onSubmit,
+}) {
+  return (
+    <section>
+      <h2 className="font-display text-lg font-semibold text-lab-900 dark:text-dark-ink">
+        Send Push Notification
+      </h2>
+      <p className="mt-1 text-sm text-ink-soft dark:text-dark-ink-soft">
+        Goes out immediately to everyone who's turned on notifications — games,
+        events, new photos, or any other update.
+      </p>
+      <form onSubmit={onSubmit} className="mt-3 max-w-sm space-y-2">
+        <input
+          type="text"
+          value={notifyTitle}
+          onChange={(e) => setNotifyTitle(e.target.value)}
+          placeholder="Title (e.g. New photos are up!)"
+          className="w-full rounded-sm border border-ink/15 bg-transparent px-3 py-2 text-sm dark:border-dark-border dark:text-dark-ink"
+        />
+        <textarea
+          value={notifyBody}
+          onChange={(e) => setNotifyBody(e.target.value)}
+          placeholder="Message body"
+          rows={3}
+          className="w-full rounded-sm border border-ink/15 bg-transparent px-3 py-2 text-sm dark:border-dark-border dark:text-dark-ink"
+        />
+        <input
+          type="text"
+          value={notifyImage}
+          onChange={(e) => setNotifyImage(e.target.value)}
+          placeholder="Image URL (optional — preview photo)"
+          className="w-full rounded-sm border border-ink/15 bg-transparent px-3 py-2 text-sm dark:border-dark-border dark:text-dark-ink"
+        />
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          type="submit"
+          disabled={notifySending}
+          className="rounded-sm bg-coral-500 px-4 py-2 text-sm font-semibold text-paper disabled:opacity-50"
+        >
+          {notifySending ? "Sending…" : "Send to all subscribers"}
+        </motion.button>
+        {notifyResult && (
+          <p className="text-sm text-lab-700 dark:text-lab-500">{notifyResult}</p>
+        )}
+      </form>
+    </section>
+  );
+}
+
+function MemberYearGroup({
+  label,
+  members,
+  onToggleRegistration,
+  onTogglePayment,
+}) {
   return (
     <div>
       <h3 className="label-tag mb-2 text-lab-700 dark:text-lab-500">
@@ -480,7 +590,9 @@ function MemberYearGroup({ label, members, onToggleRegistration, onTogglePayment
             className="flex flex-col gap-2 rounded-sm border border-ink/10 p-3 dark:border-dark-border sm:flex-row sm:items-center sm:justify-between"
           >
             <div>
-              <p className="text-sm font-semibold text-lab-900 dark:text-dark-ink">{m.full_name}</p>
+              <p className="text-sm font-semibold text-lab-900 dark:text-dark-ink">
+                {m.full_name}
+              </p>
               <p className="text-xs text-ink-soft dark:text-dark-ink-soft">
                 {m.year_of_study || "Year unknown"}
                 {m.phone && (
