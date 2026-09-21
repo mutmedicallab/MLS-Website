@@ -338,17 +338,17 @@ export default function AdminPortal() {
       >
         {sectionOrder.map((key) => (
           <Reorder.Item
-            key={key}
-            value={key}
-            whileDrag={{
-              scale: 1.02,
-              boxShadow: "0 12px 28px rgba(0,0,0,0.15)",
-              zIndex: 50,
-            }}
-            className="cursor-grab rounded-lg border border-ink/10 bg-paper p-5 active:cursor-grabbing dark:border-dark-border dark:bg-dark-bg"
-          >
-            {sectionComponents[key]}
-          </Reorder.Item>
+  key={key}
+  value={key}
+  whileDrag={{
+    scale: 1.02,
+    boxShadow: "0 12px 28px rgba(0,0,0,0.15)",
+    zIndex: 50,
+  }}
+  className="touch-pan-y rounded-lg border border-ink/10 bg-paper p-5 dark:border-dark-border dark:bg-dark-bg"
+>
+  {sectionComponents[key]}
+</Reorder.Item>
         ))}
       </Reorder.Group>
     </div>
@@ -701,5 +701,51 @@ function MemberYearGroup({
         ))}
       </div>
     </div>
+  );
+}
+function TiltTile({ children, className = "" }) {
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+
+  const rotateX = useSpring(useTransform(y, [-0.5, 0.5], [8, -8]), {
+    stiffness: 300,
+    damping: 22,
+  });
+  const rotateY = useSpring(useTransform(x, [-0.5, 0.5], [-8, 8]), {
+    stiffness: 300,
+    damping: 22,
+  });
+
+  function handleMouseMove(e) {
+    // Prevent running tilt logic on touch interactions
+    if (window.matchMedia("(pointer: coarse)").matches) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const offsetX = (e.clientX - rect.left) / rect.width - 0.5;
+    const offsetY = (e.clientY - rect.top) / rect.height - 0.5;
+
+    x.set(offsetX);
+    y.set(offsetY);
+  }
+
+  function handleMouseLeave() {
+    x.set(0);
+    y.set(0);
+  }
+
+  return (
+    <motion.div
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{
+        rotateX,
+        rotateY,
+      }}
+      whileHover={{ scale: 1.015 }}
+      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+      className={`will-change-transform ${className}`}
+    >
+      {children}
+    </motion.div>
   );
 }
