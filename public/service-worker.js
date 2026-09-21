@@ -6,11 +6,12 @@ self.addEventListener("push", (event) => {
   const data = event.data ? event.data.json() : {};
   const title = data.title || "MUTMLSA";
   const options = {
-    body: data.body || "",
-    icon: "/favicon.jpeg",
-    badge: "/favicon.jpeg",
-    data: { url: data.url || "/" },
-  };
+  body: data.body || "",
+  icon: "/favicon.jpeg",
+  badge: "/favicon.jpeg",
+  image: data.image || undefined,  // ← the big preview photo
+  data: { url: data.url || "/" },
+};
   event.waitUntil(self.registration.showNotification(title, options));
 });
 

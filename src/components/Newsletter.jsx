@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { API_BASE_URL } from "../config/api";
 import AmbientField from "./AmbientField";
+import NotifyOptin from "./Notifyoptin";
 
 export default function Newsletter() {
   const [form, setForm] = useState({ fullName: "", email: "" });
@@ -94,6 +95,10 @@ export default function Newsletter() {
           {status === "error" && (
             <p className="mt-3 text-sm text-coral-600">{errorMsg}</p>
           )}
+
+          <div className="mt-6 flex justify-center">
+            <NotifyOptin />
+          </div>
         </div>
       </div>
     </section>
