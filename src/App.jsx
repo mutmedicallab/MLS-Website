@@ -24,22 +24,37 @@ import useDarkMode from "./hooks/useDarkMode";
 import ChatWidget from "./components/ChatWidget";
 import AdminPortal from "./components/AdminPortal";
 
+// Maps a specific section hash to the tab it lives in, so a notification
+// (or any shared link) linking to e.g. "#bingo" lands on the right tab
+// AND scrolls to the right section — not just the tab's top.
+const HASH_TO_TAB = {
+  "#calendar": "get involved",
+  "#bingo": "get involved",
+  "#quiz": "get involved",
+  "#speed-round": "get involved",
+  "#get-involved": "get involved",
+  "#archive": "archive",
+  "#moments": "archive",
+  "#alumni": "archive",
+};
+
 export default function App() {
   const [dark, setDark] = useDarkMode();
   const [activeTab, setActiveTab] = useState(() => {
-  if (window.location.hash === "#get-involved") return "get involved";
-  if (window.location.hash === "#archive") return "archive";
-  return "home";
-});
+    return HASH_TO_TAB[window.location.hash] || "home";
+  });
 
   useEffect(() => {
     if (window.location.hash) {
       const el = document.querySelector(window.location.hash);
       if (el) {
-        setTimeout(() => el.scrollIntoView({ behavior: "smooth" }), 100);
+        // Wait for the active tab's content to actually mount before
+        // scrolling, since the target section may not exist in the DOM
+        // until activeTab switches to the tab it lives in.
+        setTimeout(() => el.scrollIntoView({ behavior: "smooth" }), 150);
       }
     }
-  }, []);
+  }, [activeTab]);
 
   if (window.location.pathname === "/admin") {
     return <AdminPortal />;
