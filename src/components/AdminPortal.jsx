@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { motion, AnimatePresence, Reorder } from "motion/react";
+import {
+  motion,
+  AnimatePresence,
+  Reorder,
+  useMotionValue,
+  useTransform,
+  useSpring,
+} from "motion/react";
 import { API_BASE_URL } from "../config/api";
 
 const CURRENT_PERIOD = { academicYear: "2026/2027", semester: "Sem 1" };
@@ -20,6 +27,55 @@ const sectionVariants = {
   hidden: { opacity: 0, y: 16 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.35 } },
 };
+
+/**
+ * Interactive 3D Tile wrapper that tilts in response to cursor movement
+ */
+function TiltTile({ children }) {
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+
+  // Smooth springs for high-framerate tilt tracking
+  const rotateX = useSpring(useTransform(y, [-0.5, 0.5], [10, -10]), {
+    stiffness: 300,
+    damping: 22,
+  });
+  const rotateY = useSpring(useTransform(x, [-0.5, 0.5], [-10, 10]), {
+    stiffness: 300,
+    damping: 22,
+  });
+
+  function handleMouseMove(e) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const offsetX = (e.clientX - rect.left) / rect.width - 0.5;
+    const offsetY = (e.clientY - rect.top) / rect.height - 0.5;
+
+    x.set(offsetX);
+    y.set(offsetY);
+  }
+
+  function handleMouseLeave() {
+    x.set(0);
+    y.set(0);
+  }
+
+  return (
+    <motion.div
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{
+        rotateX,
+        rotateY,
+        transformStyle: "preserve-3d",
+      }}
+      whileHover={{ scale: 1.012 }}
+      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+      className="will-change-transform"
+    >
+      {children}
+    </motion.div>
+  );
+}
 
 export default function AdminPortal() {
   const [password, setPassword] = useState("");
@@ -278,16 +334,20 @@ export default function AdminPortal() {
         axis="y"
         values={sectionOrder}
         onReorder={setSectionOrder}
-        className="mt-10 space-y-6"
+        className="mt-10 space-y-6 [perspective:1000px]"
       >
         {sectionOrder.map((key) => (
           <Reorder.Item
             key={key}
             value={key}
-            className="cursor-grab rounded-sm border border-ink/10 bg-paper p-4 active:cursor-grabbing dark:border-dark-border dark:bg-dark-bg"
-            whileDrag={{ scale: 1.01, boxShadow: "0 8px 24px rgba(0,0,0,0.15)" }}
+            whileDrag={{
+              scale: 1.03,
+              boxShadow: "0 16px 32px rgba(0,0,0,0.18)",
+              zIndex: 50,
+            }}
+            className="cursor-grab rounded-lg border border-ink/10 bg-paper p-5 active:cursor-grabbing dark:border-dark-border dark:bg-dark-bg"
           >
-            {sectionComponents[key]}
+            <TiltTile>{sectionComponents[key]}</TiltTile>
           </Reorder.Item>
         ))}
       </Reorder.Group>
