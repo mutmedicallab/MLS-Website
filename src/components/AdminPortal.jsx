@@ -29,18 +29,18 @@ const sectionVariants = {
 };
 
 /**
- * Interactive 3D Tile wrapper that tilts in response to cursor movement
+ * 3D Tile wrapper for individual item cards (members, applications, etc.)
  */
-function TiltTile({ children }) {
+function TiltTile({ children, className = "" }) {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
 
-  // Smooth springs for high-framerate tilt tracking
-  const rotateX = useSpring(useTransform(y, [-0.5, 0.5], [10, -10]), {
+  // Smooth springs for cursor-tracking rotation
+  const rotateX = useSpring(useTransform(y, [-0.5, 0.5], [8, -8]), {
     stiffness: 300,
     damping: 22,
   });
-  const rotateY = useSpring(useTransform(x, [-0.5, 0.5], [-10, 10]), {
+  const rotateY = useSpring(useTransform(x, [-0.5, 0.5], [-8, 8]), {
     stiffness: 300,
     damping: 22,
   });
@@ -68,9 +68,9 @@ function TiltTile({ children }) {
         rotateY,
         transformStyle: "preserve-3d",
       }}
-      whileHover={{ scale: 1.012 }}
+      whileHover={{ scale: 1.015 }}
       transition={{ type: "spring", stiffness: 400, damping: 25 }}
-      className="will-change-transform"
+      className={`will-change-transform ${className}`}
     >
       {children}
     </motion.div>
@@ -334,20 +334,20 @@ export default function AdminPortal() {
         axis="y"
         values={sectionOrder}
         onReorder={setSectionOrder}
-        className="mt-10 space-y-6 [perspective:1000px]"
+        className="mt-10 space-y-6"
       >
         {sectionOrder.map((key) => (
           <Reorder.Item
             key={key}
             value={key}
             whileDrag={{
-              scale: 1.03,
-              boxShadow: "0 16px 32px rgba(0,0,0,0.18)",
+              scale: 1.02,
+              boxShadow: "0 12px 28px rgba(0,0,0,0.15)",
               zIndex: 50,
             }}
             className="cursor-grab rounded-lg border border-ink/10 bg-paper p-5 active:cursor-grabbing dark:border-dark-border dark:bg-dark-bg"
           >
-            <TiltTile>{sectionComponents[key]}</TiltTile>
+            {sectionComponents[key]}
           </Reorder.Item>
         ))}
       </Reorder.Group>
@@ -361,7 +361,7 @@ function ApplicationsSection({ applications, confirmingId, onConfirm }) {
       <h2 className="font-display text-lg font-semibold text-lab-900 dark:text-dark-ink">
         Pending Applications ({applications.length})
       </h2>
-      <div className="mt-3 space-y-2">
+      <div className="mt-3 space-y-2 [perspective:800px]">
         {applications.length === 0 && (
           <p className="text-sm text-ink-soft dark:text-dark-ink-soft">
             No pending applications.
@@ -369,44 +369,45 @@ function ApplicationsSection({ applications, confirmingId, onConfirm }) {
         )}
         <AnimatePresence>
           {applications.map((app) => (
-            <motion.div
-              key={app.id}
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 8 }}
-              className="flex items-center justify-between rounded-sm border border-ink/10 p-3 dark:border-dark-border"
-            >
-              <div>
-                <p className="text-sm font-semibold text-lab-900 dark:text-dark-ink">
-                  {app.full_name}
-                </p>
-                <p className="text-xs text-ink-soft dark:text-dark-ink-soft">
-                  {app.email} · {app.year_of_study || "Year unknown"}
-                  {app.phone && (
-                    <>
-                      {" · "}
-                      <a
-                        href={`https://wa.me/${toWhatsAppNumber(app.phone)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-lab-700 underline dark:text-lab-500"
-                      >
-                        {app.phone}
-                      </a>
-                    </>
-                  )}
-                </p>
-              </div>
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                type="button"
-                onClick={() => onConfirm(app)}
-                disabled={confirmingId === app.id}
-                className="rounded-sm bg-lab-800 px-3 py-1.5 text-xs font-semibold text-paper disabled:opacity-50"
+            <TiltTile key={app.id}>
+              <motion.div
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 8 }}
+                className="flex items-center justify-between rounded-md border border-ink/10 bg-paper p-3 shadow-sm dark:border-dark-border dark:bg-dark-bg"
               >
-                {confirmingId === app.id ? "Confirming…" : "Confirm as member"}
-              </motion.button>
-            </motion.div>
+                <div>
+                  <p className="text-sm font-semibold text-lab-900 dark:text-dark-ink">
+                    {app.full_name}
+                  </p>
+                  <p className="text-xs text-ink-soft dark:text-dark-ink-soft">
+                    {app.email} · {app.year_of_study || "Year unknown"}
+                    {app.phone && (
+                      <>
+                        {" · "}
+                        <a
+                          href={`https://wa.me/${toWhatsAppNumber(app.phone)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-lab-700 underline dark:text-lab-500"
+                        >
+                          {app.phone}
+                        </a>
+                      </>
+                    )}
+                  </p>
+                </div>
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  type="button"
+                  onClick={() => onConfirm(app)}
+                  disabled={confirmingId === app.id}
+                  className="rounded-sm bg-lab-800 px-3 py-1.5 text-xs font-semibold text-paper disabled:opacity-50"
+                >
+                  {confirmingId === app.id ? "Confirming…" : "Confirm as member"}
+                </motion.button>
+              </motion.div>
+            </TiltTile>
           ))}
         </AnimatePresence>
       </div>
@@ -537,7 +538,7 @@ function SubscribersSection({
         className="mt-4 w-full max-w-xs rounded-sm border border-ink/15 bg-transparent px-3 py-2 text-sm dark:border-dark-border dark:text-dark-ink"
       />
 
-      <div className="mt-3 overflow-hidden rounded-sm border border-ink/10 dark:border-dark-border">
+      <div className="mt-3 overflow-hidden rounded-sm border border-ink/10 p-1 dark:border-dark-border [perspective:800px]">
         {filteredSubscribers.length === 0 ? (
           <p className="p-4 text-sm text-ink-soft dark:text-dark-ink-soft">
             {subscribers.length === 0
@@ -545,24 +546,23 @@ function SubscribersSection({
               : "No subscribers match that search."}
           </p>
         ) : (
-          <div className="divide-y divide-ink/10 dark:divide-dark-border">
+          <div className="space-y-1">
             {filteredSubscribers.map((s, i) => (
-              <motion.div
-                key={s.id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.2, delay: Math.min(i * 0.015, 0.3) }}
-                className={`flex flex-col gap-0.5 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between ${
-                  i % 2 === 0 ? "bg-lab-50/40 dark:bg-dark-surface/30" : ""
-                }`}
-              >
-                <span className="text-sm font-medium text-lab-900 dark:text-dark-ink">
-                  {s.full_name || "—"}
-                </span>
-                <span className="text-xs text-ink-soft dark:text-dark-ink-soft">
-                  {s.email}
-                </span>
-              </motion.div>
+              <TiltTile key={s.id}>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.2, delay: Math.min(i * 0.015, 0.3) }}
+                  className="flex flex-col gap-0.5 rounded-sm border border-ink/5 bg-paper px-4 py-2.5 shadow-xs sm:flex-row sm:items-center sm:justify-between dark:border-dark-border dark:bg-dark-bg"
+                >
+                  <span className="text-sm font-medium text-lab-900 dark:text-dark-ink">
+                    {s.full_name || "—"}
+                  </span>
+                  <span className="text-xs text-ink-soft dark:text-dark-ink-soft">
+                    {s.email}
+                  </span>
+                </motion.div>
+              </TiltTile>
             ))}
           </div>
         )}
@@ -640,63 +640,64 @@ function MemberYearGroup({
       <h3 className="label-tag mb-2 text-lab-700 dark:text-lab-500">
         {label} ({members.length})
       </h3>
-      <div className="space-y-2">
+      <div className="space-y-2 [perspective:800px]">
         {members.map((m) => (
-          <motion.div
-            key={m.id}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.2 }}
-            className="flex flex-col gap-2 rounded-sm border border-ink/10 p-3 dark:border-dark-border sm:flex-row sm:items-center sm:justify-between"
-          >
-            <div>
-              <p className="text-sm font-semibold text-lab-900 dark:text-dark-ink">
-                {m.full_name}
-              </p>
-              <p className="text-xs text-ink-soft dark:text-dark-ink-soft">
-                {m.year_of_study || "Year unknown"}
-                {m.phone && (
-                  <>
-                    {" · "}
-                    <a
-                      href={`https://wa.me/${toWhatsAppNumber(m.phone)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-lab-700 underline dark:text-lab-500"
-                    >
-                      {m.phone}
-                    </a>
-                  </>
-                )}
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                type="button"
-                onClick={() => onToggleRegistration(m)}
-                className={`rounded-sm px-3 py-1.5 text-xs font-semibold ${
-                  m.registration_paid
-                    ? "bg-lab-600 text-paper"
-                    : "border border-coral-500 text-coral-600"
-                }`}
-              >
-                {m.registration_paid ? "Registration ✓" : "Registration unpaid"}
-              </motion.button>
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                type="button"
-                onClick={() => onTogglePayment(m)}
-                className={`rounded-sm px-3 py-1.5 text-xs font-semibold ${
-                  m.paidThisPeriod
-                    ? "bg-lab-600 text-paper"
-                    : "border border-coral-500 text-coral-600"
-                }`}
-              >
-                {m.paidThisPeriod ? "Semester Paid ✓" : "Mark semester paid"}
-              </motion.button>
-            </div>
-          </motion.div>
+          <TiltTile key={m.id}>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.2 }}
+              className="flex flex-col gap-2 rounded-md border border-ink/10 bg-paper p-3 shadow-xs dark:border-dark-border dark:bg-dark-bg sm:flex-row sm:items-center sm:justify-between"
+            >
+              <div>
+                <p className="text-sm font-semibold text-lab-900 dark:text-dark-ink">
+                  {m.full_name}
+                </p>
+                <p className="text-xs text-ink-soft dark:text-dark-ink-soft">
+                  {m.year_of_study || "Year unknown"}
+                  {m.phone && (
+                    <>
+                      {" · "}
+                      <a
+                        href={`https://wa.me/${toWhatsAppNumber(m.phone)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-lab-700 underline dark:text-lab-500"
+                      >
+                        {m.phone}
+                      </a>
+                    </>
+                  )}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  type="button"
+                  onClick={() => onToggleRegistration(m)}
+                  className={`rounded-sm px-3 py-1.5 text-xs font-semibold ${
+                    m.registration_paid
+                      ? "bg-lab-600 text-paper"
+                      : "border border-coral-500 text-coral-600"
+                  }`}
+                >
+                  {m.registration_paid ? "Registration ✓" : "Registration unpaid"}
+                </motion.button>
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  type="button"
+                  onClick={() => onTogglePayment(m)}
+                  className={`rounded-sm px-3 py-1.5 text-xs font-semibold ${
+                    m.paidThisPeriod
+                      ? "bg-lab-600 text-paper"
+                      : "border border-coral-500 text-coral-600"
+                  }`}
+                >
+                  {m.paidThisPeriod ? "Semester Paid ✓" : "Mark semester paid"}
+                </motion.button>
+              </div>
+            </motion.div>
+          </TiltTile>
         ))}
       </div>
     </div>
