@@ -26,7 +26,11 @@ import AdminPortal from "./components/AdminPortal";
 
 export default function App() {
   const [dark, setDark] = useDarkMode();
-  const [activeTab, setActiveTab] = useState("home");
+  const [activeTab, setActiveTab] = useState(() => {
+  if (window.location.hash === "#get-involved") return "get involved";
+  if (window.location.hash === "#archive") return "archive";
+  return "home";
+});
 
   useEffect(() => {
     if (window.location.hash) {
