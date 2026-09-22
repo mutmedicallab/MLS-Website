@@ -11,11 +11,10 @@ export default function NotifyOptIn({ playerName }) {
     });
   }, []);
 
- 
-
   async function handleEnable() {
     setStatus("subscribing");
     setError("");
+    
     try {
       if (!(await isPushSupported())) {
         setStatus("unsupported");
@@ -29,16 +28,21 @@ export default function NotifyOptIn({ playerName }) {
     }
   }
 
+  // FIXED: Moved to the top so it intercepts the initial render state
+  if (status === "checking") {
+    return null; 
+  }
+
+  if (status === "unsupported") {
+    return null;
+  }
+
   if (status === "subscribed") {
     return (
       <p className="mt-3 text-sm text-lab-700 dark:text-lab-500">
         You're set — we'll notify you about updates, leaderboard changes, and more.
       </p>
     );
-  }
-
-  if (status === "unsupported") {
-    return null;
   }
 
   return (
@@ -51,10 +55,10 @@ export default function NotifyOptIn({ playerName }) {
       >
         {status === "subscribing" ? "Enabling…" : "Turn on notifications"}
       </button>
+      
       {status === "error" && (
         <p className="mt-1 text-xs text-coral-600">{error}</p>
       )}
     </div>
   );
 }
-if (status === "checking") return null;
