@@ -54,3 +54,10 @@ export async function unsubscribeFromPush() {
   });
   await subscription.unsubscribe();
 }
+export async function isAlreadySubscribed() {
+  if (!(await isPushSupported())) return false;
+  const registration = await navigator.serviceWorker.getRegistration();
+  if (!registration) return false;
+  const subscription = await registration.pushManager.getSubscription();
+  return !!subscription;
+}
