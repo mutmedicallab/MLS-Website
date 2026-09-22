@@ -1,10 +1,18 @@
-import { useState } from "react";
-import { subscribeToPush, isPushSupported } from "../utils/pushNotifications";
+import { useState, useEffect } from "react";
+import { subscribeToPush, isPushSupported, isAlreadySubscribed } from "../utils/pushNotifications";
 
-export default function NotifyOptin({ playerName }) {
-  const [status, setStatus] = useState("idle");
+export default function NotifyOptIn({ playerName }) {
+  const [status, setStatus] = useState("checking");
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    isAlreadySubscribed().then((subscribed) => {
+      setStatus(subscribed ? "subscribed" : "idle");
+    });
+  }, []);
+
+ if (status === "checking") return null;
+ 
   async function handleEnable() {
     setStatus("subscribing");
     setError("");
