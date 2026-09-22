@@ -11,8 +11,8 @@ export default function NotifyOptIn({ playerName }) {
     });
   }, []);
 
- if (status === "checking") return null;
  
+
   async function handleEnable() {
     setStatus("subscribing");
     setError("");
@@ -57,3 +57,4 @@ export default function NotifyOptIn({ playerName }) {
     </div>
   );
 }
+if (status === "checking") return null;
