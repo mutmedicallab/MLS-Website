@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence, Reorder } from "motion/react";
+import { motion, AnimatePresence, Reorder, useDragControls } from "motion/react";
 import { API_BASE_URL } from "../config/api";
 
 const CURRENT_PERIOD = { academicYear: "2026/2027", semester: "Sem 1" };
@@ -53,6 +53,66 @@ function SkeletonBlock() {
         />
       ))}
     </div>
+  );
+}
+
+// A "physical tile" hover/tap effect: slight 3D tilt + lift + shadow,
+// used to wrap every name row (Applications, Members, Subscribers) so
+// they all feel like tiles you can pick up rather than flat list rows.
+function Tile({ children, flash, className = "", ...props }) {
+  return (
+    <motion.div
+      style={{ perspective: 700 }}
+      className={className}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 6 }}
+        animate={{
+          opacity: 1,
+          y: 0,
+          backgroundColor: flash ? "rgba(34,197,94,0.15)" : "rgba(0,0,0,0)",
+        }}
+        whileHover={{ rotateX: 4, rotateY: -4, scale: 1.015, y: -2 }}
+        whileTap={{ scale: 0.98, rotateX: 0, rotateY: 0 }}
+        transition={{
+          opacity: { duration: 0.2 },
+          y: { duration: 0.2 },
+          rotateX: { type: "spring", stiffness: 250, damping: 18 },
+          rotateY: { type: "spring", stiffness: 250, damping: 18 },
+          backgroundColor: { duration: 0.6 },
+        }}
+        style={{ transformStyle: "preserve-3d" }}
+        className="rounded-sm border border-ink/10 bg-paper p-3 shadow-sm transition-shadow hover:shadow-lg dark:border-dark-border dark:bg-dark-bg"
+        {...props}
+      >
+        {children}
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// Drag handle isolated from the rest of the tile, so dragging to reorder
+// sections never intercepts a normal vertical scroll on mobile.
+function DraggableSection({ value, children }) {
+  const controls = useDragControls();
+  return (
+    <Reorder.Item
+      value={value}
+      dragListener={false}
+      dragControls={controls}
+      whileDrag={{ scale: 1.02, boxShadow: "0 8px 24px rgba(0,0,0,0.18)", zIndex: 10 }}
+      className="rounded-sm border border-ink/10 bg-paper p-5 dark:border-dark-border dark:bg-dark-bg"
+    >
+      <div className="mb-3 flex justify-end">
+        <span
+          onPointerDown={(e) => controls.start(e)}
+          className="cursor-grab select-none touch-none text-ink-soft/50 active:cursor-grabbing dark:text-dark-ink-soft/50"
+        >
+          ⠿ drag
+        </span>
+      </div>
+      {children}
+    </Reorder.Item>
   );
 }
 
@@ -274,42 +334,38 @@ export default function AdminPortal() {
               )}
               <AnimatePresence>
                 {applications.map((app) => (
-                  <motion.div
-                    key={app.id}
-                    initial={{ opacity: 0, x: -8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 8 }}
-                    className="flex items-center justify-between rounded-sm border border-ink/10 p-3 dark:border-dark-border"
-                  >
-                    <div>
-                      <p className="text-sm font-semibold text-lab-900 dark:text-dark-ink">{app.full_name}</p>
-                      <p className="text-xs text-ink-soft dark:text-dark-ink-soft">
-                        {app.email} · {app.year_of_study || "Year unknown"}
-                        {app.phone && (
-                          <>
-                            {" · "}
-                            <a
-                              href={`https://wa.me/${toWhatsAppNumber(app.phone)}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-lab-700 underline dark:text-lab-500"
-                            >
-                              {app.phone}
-                            </a>
-                          </>
-                        )}
-                      </p>
+                  <Tile key={app.id}>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-semibold text-lab-900 dark:text-dark-ink">{app.full_name}</p>
+                        <p className="text-xs text-ink-soft dark:text-dark-ink-soft">
+                          {app.email} · {app.year_of_study || "Year unknown"}
+                          {app.phone && (
+                            <>
+                              {" · "}
+                              <a
+                                href={`https://wa.me/${toWhatsAppNumber(app.phone)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-lab-700 underline dark:text-lab-500"
+                              >
+                                {app.phone}
+                              </a>
+                            </>
+                          )}
+                        </p>
+                      </div>
+                      <motion.button
+                        whileTap={{ scale: 0.95 }}
+                        type="button"
+                        onClick={() => confirmApplication(app)}
+                        disabled={confirmingId === app.id}
+                        className="rounded-sm bg-lab-800 px-3 py-1.5 text-xs font-semibold text-paper disabled:opacity-50"
+                      >
+                        {confirmingId === app.id ? "Confirming…" : "Confirm as member"}
+                      </motion.button>
                     </div>
-                    <motion.button
-                      whileTap={{ scale: 0.95 }}
-                      type="button"
-                      onClick={() => confirmApplication(app)}
-                      disabled={confirmingId === app.id}
-                      className="rounded-sm bg-lab-800 px-3 py-1.5 text-xs font-semibold text-paper disabled:opacity-50"
-                    >
-                      {confirmingId === app.id ? "Confirming…" : "Confirm as member"}
-                    </motion.button>
-                  </motion.div>
+                  </Tile>
                 ))}
               </AnimatePresence>
             </>
@@ -419,34 +475,24 @@ export default function AdminPortal() {
           className="mt-4 w-full max-w-xs rounded-sm border border-ink/15 bg-transparent px-3 py-2 text-sm dark:border-dark-border dark:text-dark-ink"
         />
 
-        <div className="mt-3 overflow-hidden rounded-sm border border-ink/10 dark:border-dark-border">
+        <div className="mt-3 space-y-1.5">
           {refreshing ? (
-            <div className="p-3">
-              <SkeletonBlock />
-            </div>
+            <SkeletonBlock />
           ) : filteredSubscribers.length === 0 ? (
-            <p className="p-4 text-sm text-ink-soft dark:text-dark-ink-soft">
+            <p className="text-sm text-ink-soft dark:text-dark-ink-soft">
               {subscribers.length === 0 ? "No subscribers yet." : "No subscribers match that search."}
             </p>
           ) : (
-            <div className="divide-y divide-ink/10 dark:divide-dark-border">
-              {filteredSubscribers.map((s, i) => (
-                <motion.div
-                  key={s.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.2, delay: Math.min(i * 0.015, 0.3) }}
-                  className={`flex flex-col gap-0.5 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between ${
-                    i % 2 === 0 ? "bg-lab-50/40 dark:bg-dark-surface/30" : ""
-                  }`}
-                >
+            filteredSubscribers.map((s) => (
+              <Tile key={s.id}>
+                <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between">
                   <span className="text-sm font-medium text-lab-900 dark:text-dark-ink">
                     {s.full_name || "—"}
                   </span>
                   <span className="text-xs text-ink-soft dark:text-dark-ink-soft">{s.email}</span>
-                </motion.div>
-              ))}
-            </div>
+                </div>
+              </Tile>
+            ))
           )}
         </div>
       </div>
@@ -537,19 +583,9 @@ export default function AdminPortal() {
         className="mt-3 space-y-4"
       >
         {sectionOrder.map((key) => (
-          <Reorder.Item
-            key={key}
-            value={key}
-            whileDrag={{ scale: 1.02, boxShadow: "0 8px 24px rgba(0,0,0,0.18)", zIndex: 10 }}
-            className="rounded-sm border border-ink/10 bg-paper p-5 dark:border-dark-border dark:bg-dark-bg"
-          >
-            <div className="mb-3 flex justify-end">
-              <span className="cursor-grab select-none text-ink-soft/50 active:cursor-grabbing dark:text-dark-ink-soft/50">
-                ⠿ drag
-              </span>
-            </div>
+          <DraggableSection key={key} value={key}>
             {sections[key]}
-          </Reorder.Item>
+          </DraggableSection>
         ))}
       </Reorder.Group>
     </div>
@@ -564,62 +600,55 @@ function MemberYearGroup({ label, members, flashId, onToggleRegistration, onTogg
       </h3>
       <div className="space-y-2">
         {members.map((m) => (
-          <motion.div
-            key={m.id}
-            initial={{ opacity: 0 }}
-            animate={{
-              opacity: 1,
-              backgroundColor: flashId === m.id ? "rgba(34,197,94,0.15)" : "rgba(0,0,0,0)",
-            }}
-            transition={{ duration: 0.2, backgroundColor: { duration: 0.6 } }}
-            className="flex flex-col gap-2 rounded-sm border border-ink/10 p-3 dark:border-dark-border sm:flex-row sm:items-center sm:justify-between"
-          >
-            <div>
-              <p className="text-sm font-semibold text-lab-900 dark:text-dark-ink">{m.full_name}</p>
-              <p className="text-xs text-ink-soft dark:text-dark-ink-soft">
-                {m.year_of_study || "Year unknown"}
-                {m.phone && (
-                  <>
-                    {" · "}
-                    <a
-                      href={`https://wa.me/${toWhatsAppNumber(m.phone)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-lab-700 underline dark:text-lab-500"
-                    >
-                      {m.phone}
-                    </a>
-                  </>
-                )}
-              </p>
+          <Tile key={m.id} flash={flashId === m.id}>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-lab-900 dark:text-dark-ink">{m.full_name}</p>
+                <p className="text-xs text-ink-soft dark:text-dark-ink-soft">
+                  {m.year_of_study || "Year unknown"}
+                  {m.phone && (
+                    <>
+                      {" · "}
+                      <a
+                        href={`https://wa.me/${toWhatsAppNumber(m.phone)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-lab-700 underline dark:text-lab-500"
+                      >
+                        {m.phone}
+                      </a>
+                    </>
+                  )}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  type="button"
+                  onClick={() => onToggleRegistration(m)}
+                  className={`rounded-sm px-3 py-1.5 text-xs font-semibold ${
+                    m.registration_paid
+                      ? "bg-lab-600 text-paper"
+                      : "border border-coral-500 text-coral-600"
+                  }`}
+                >
+                  {m.registration_paid ? "Registration ✓" : "Registration unpaid"}
+                </motion.button>
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  type="button"
+                  onClick={() => onTogglePayment(m)}
+                  className={`rounded-sm px-3 py-1.5 text-xs font-semibold ${
+                    m.paidThisPeriod
+                      ? "bg-lab-600 text-paper"
+                      : "border border-coral-500 text-coral-600"
+                  }`}
+                >
+                  {m.paidThisPeriod ? "Semester Paid ✓" : "Mark semester paid"}
+                </motion.button>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                type="button"
-                onClick={() => onToggleRegistration(m)}
-                className={`rounded-sm px-3 py-1.5 text-xs font-semibold ${
-                  m.registration_paid
-                    ? "bg-lab-600 text-paper"
-                    : "border border-coral-500 text-coral-600"
-                }`}
-              >
-                {m.registration_paid ? "Registration ✓" : "Registration unpaid"}
-              </motion.button>
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                type="button"
-                onClick={() => onTogglePayment(m)}
-                className={`rounded-sm px-3 py-1.5 text-xs font-semibold ${
-                  m.paidThisPeriod
-                    ? "bg-lab-600 text-paper"
-                    : "border border-coral-500 text-coral-600"
-                }`}
-              >
-                {m.paidThisPeriod ? "Semester Paid ✓" : "Mark semester paid"}
-              </motion.button>
-            </div>
-          </motion.div>
+          </Tile>
         ))}
       </div>
     </div>
