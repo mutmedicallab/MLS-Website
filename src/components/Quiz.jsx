@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import confetti from "canvas-confetti";
 import { API_BASE_URL } from "../config/api";
+import { getCurrentPeriodId } from "../utils/periodId";
 
-const WEEK_ID = "2026-W39";
+const WEEK_ID = getCurrentPeriodId(2); 
 const QUESTIONS_PER_ATTEMPT = 5;
 
 const QUESTION_POOL = [
