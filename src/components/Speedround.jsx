@@ -110,13 +110,13 @@ useEffect(() => {
   }, []);
 
   function loadLeaderboard(full = false) {
-  fetch(`${API_BASE_URL}/api/quiz/leaderboard?week=${encodeURIComponent(WEEK_ID)}${full ? "&full=true" : ""}`)
+  fetch(`${API_BASE_URL}/api/sprint/leaderboard?week=${encodeURIComponent(WEEK_ID)}${full ? "&full=true" : ""}`)
     .then((res) => res.json())
     .then((data) => setLeaderboard(data.leaderboard || []));
 }
 
   function loadPeriods() {
-  fetch(`${API_BASE_URL}/api/quiz/champions-by-period`)
+  fetch(`${API_BASE_URL}/api/sprint/champions-by-period`)
     .then((res) => res.json())
     .then((data) => {
       setPeriods(data.periods || []);
@@ -210,7 +210,7 @@ function toggleLeaderboardView() {
   return (
     <section id="speed-round" className="border-t border-ink/10 py-20 dark:border-dark-border md:py-28">
       <div className="mx-auto max-w-2xl px-5 md:px-8">
-        <span className="label-tag text-lab-700 dark:text-lab-500">This week's speed round</span>
+        <span className="label-tag text-lab-700 dark:text-lab-500"> speed round</span>
         <h2 className="mt-3 font-display text-3xl font-semibold text-lab-900 md:text-4xl dark:text-dark-ink">
           60-Second Term Sprint
         </h2>
