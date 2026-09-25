@@ -94,6 +94,7 @@ export default function Bingo() {
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState("");
   const [toast, setToast] = useState(null);
+  const [showAllLeaderboard, setShowAllLeaderboard] = useState(false);
 
   useEffect(() => {
     const savedId = localStorage.getItem("mutmlsa_bingo_card_id");
@@ -148,11 +149,17 @@ useEffect(() => {
   }
 }, [toast]);
 
-  function loadLeaderboard() {
-    fetch(`${API_BASE_URL}/api/bingo/leaderboard`)
-      .then((res) => res.json())
-      .then((data) => setLeaderboard(data.leaderboard || []));
-  }
+  function loadLeaderboard(full = false) {
+  fetch(`${API_BASE_URL}/api/quiz/leaderboard?week=${encodeURIComponent(WEEK_ID)}${full ? "&full=true" : ""}`)
+    .then((res) => res.json())
+    .then((data) => setLeaderboard(data.leaderboard || []));
+}
+
+function toggleLeaderboardView() {
+  const next = !showAllLeaderboard;
+  setShowAllLeaderboard(next);
+  loadLeaderboard(next);
+}
 
   async function handleCreate(e) {
     e.preventDefault();
@@ -310,6 +317,16 @@ useEffect(() => {
     </div>
   );
 })}
+
+{leaderboard.length >= 10 && (
+  <button
+    type="button"
+    onClick={toggleLeaderboardView}
+    className="label-tag mt-2 text-lab-700 underline underline-offset-4 dark:text-lab-500"
+  >
+    {showAllLeaderboard ? "Show top 10 only" : "Show everyone"}
+  </button>
+)}
             </div>
           </div>
         )}

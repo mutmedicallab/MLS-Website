@@ -152,17 +152,18 @@ export default function Quiz() {
   const [existingAttempt, setExistingAttempt] = useState(null);
   const [checking, setChecking] = useState(false);
   const [champions, setChampions] = useState([]);
+  const [showAllLeaderboard, setShowAllLeaderboard] = useState(false);
 
   useEffect(() => {
   loadLeaderboard();
   loadChampions();
 }, []);
 
-  function loadLeaderboard() {
-    fetch(`${API_BASE_URL}/api/quiz/leaderboard?week=${encodeURIComponent(WEEK_ID)}`)
-      .then((res) => res.json())
-      .then((data) => setLeaderboard(data.leaderboard || []));
-  }
+  function loadLeaderboard(full = false) {
+  fetch(`${API_BASE_URL}/api/quiz/leaderboard?week=${encodeURIComponent(WEEK_ID)}${full ? "&full=true" : ""}`)
+    .then((res) => res.json())
+    .then((data) => setLeaderboard(data.leaderboard || []));
+}
 
   function loadChampions() {
   fetch(`${API_BASE_URL}/api/quiz/weekly-champions`)
@@ -201,6 +202,11 @@ export default function Quiz() {
       finishQuiz();
     }
   }
+  function toggleLeaderboardView() {
+  const next = !showAllLeaderboard;
+  setShowAllLeaderboard(next);
+  loadLeaderboard(next);
+}
 
   async function finishQuiz() {
     const score = questions.reduce(
@@ -252,6 +258,15 @@ export default function Quiz() {
                   </span>
                 </div>
               ))}
+              {leaderboard.length >= 10 && (
+  <button
+    type="button"
+    onClick={toggleLeaderboardView}
+    className="label-tag mt-2 text-lab-700 underline underline-offset-4 dark:text-lab-500"
+  >
+    {showAllLeaderboard ? "Show top 10 only" : "Show everyone"}
+  </button>
+)}
             </div>
           </div>
         )}

@@ -96,6 +96,7 @@ export default function SpeedRound() {
   const [checking, setChecking] = useState(false);
   const timerRef = useRef(null);
   const [champions, setChampions] = useState([]);
+  const [showAllLeaderboard, setShowAllLeaderboard] = useState(false);
 
 useEffect(() => {
   loadLeaderboard();
@@ -107,15 +108,22 @@ useEffect(() => {
     return () => clearInterval(timerRef.current);
   }, []);
 
-  function loadLeaderboard() {
-    fetch(`${API_BASE_URL}/api/sprint/leaderboard?week=${encodeURIComponent(WEEK_ID)}`)
-      .then((res) => res.json())
-      .then((data) => setLeaderboard(data.leaderboard || []));
-  }
+  function loadLeaderboard(full = false) {
+  fetch(`${API_BASE_URL}/api/quiz/leaderboard?week=${encodeURIComponent(WEEK_ID)}${full ? "&full=true" : ""}`)
+    .then((res) => res.json())
+    .then((data) => setLeaderboard(data.leaderboard || []));
+}
+
   function loadChampions() {
   fetch(`${API_BASE_URL}/api/sprint/weekly-champions`)
     .then((res) => res.json())
     .then((data) => setChampions(data.champions || []));
+}
+
+function toggleLeaderboardView() {
+  const next = !showAllLeaderboard;
+  setShowAllLeaderboard(next);
+  loadLeaderboard(next);
 }
 
   const endRound = useCallback(
@@ -221,6 +229,15 @@ useEffect(() => {
                   </span>
                 </div>
               ))}
+              {leaderboard.length >= 10 && (
+  <button
+    type="button"
+    onClick={toggleLeaderboardView}
+    className="label-tag mt-2 text-lab-700 underline underline-offset-4 dark:text-lab-500"
+  >
+    {showAllLeaderboard ? "Show top 10 only" : "Show everyone"}
+  </button>
+)}
             </div>
           </div>
         )}
