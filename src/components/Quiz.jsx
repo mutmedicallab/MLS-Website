@@ -151,16 +151,24 @@ export default function Quiz() {
   const [leaderboard, setLeaderboard] = useState([]);
   const [existingAttempt, setExistingAttempt] = useState(null);
   const [checking, setChecking] = useState(false);
+  const [champions, setChampions] = useState([]);
 
   useEffect(() => {
-    loadLeaderboard();
-  }, []);
+  loadLeaderboard();
+  loadChampions();
+}, []);
 
   function loadLeaderboard() {
     fetch(`${API_BASE_URL}/api/quiz/leaderboard?week=${encodeURIComponent(WEEK_ID)}`)
       .then((res) => res.json())
       .then((data) => setLeaderboard(data.leaderboard || []));
   }
+
+  function loadChampions() {
+  fetch(`${API_BASE_URL}/api/quiz/weekly-champions`)
+    .then((res) => res.json())
+    .then((data) => setChampions(data.champions || []));
+}
 
   async function checkExistingAndStart(e) {
     e.preventDefault();
@@ -247,6 +255,20 @@ export default function Quiz() {
             </div>
           </div>
         )}
+
+        {champions.length > 0 && (
+  <div className="mt-4 rounded-sm border border-ink/10 bg-lab-50/50 p-4 dark:border-dark-border dark:bg-dark-surface/40">
+    <p className="label-tag text-lab-700 dark:text-lab-500">This week's champions</p>
+    <div className="mt-2 space-y-1">
+      {champions.map((c, i) => (
+        <div key={c.period} className="flex items-center justify-between text-sm">
+          <span className="text-ink-soft dark:text-dark-ink-soft">Round {i + 1}: {c.name}</span>
+          <span className="font-semibold text-lab-800 dark:text-dark-ink">{c.score}/{c.total}</span>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
 
         {!started && !submitted && (
           <motion.div

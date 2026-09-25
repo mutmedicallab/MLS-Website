@@ -95,10 +95,13 @@ export default function SpeedRound() {
   const [existingAttempt, setExistingAttempt] = useState(null);
   const [checking, setChecking] = useState(false);
   const timerRef = useRef(null);
+  const [champions, setChampions] = useState([]);
 
-  useEffect(() => {
-    loadLeaderboard();
-  }, []);
+useEffect(() => {
+  loadLeaderboard();
+  loadChampions();
+}, []);
+  
 
   useEffect(() => {
     return () => clearInterval(timerRef.current);
@@ -109,6 +112,11 @@ export default function SpeedRound() {
       .then((res) => res.json())
       .then((data) => setLeaderboard(data.leaderboard || []));
   }
+  function loadChampions() {
+  fetch(`${API_BASE_URL}/api/sprint/weekly-champions`)
+    .then((res) => res.json())
+    .then((data) => setChampions(data.champions || []));
+}
 
   const endRound = useCallback(
     async (finalScore) => {
@@ -216,6 +224,20 @@ export default function SpeedRound() {
             </div>
           </div>
         )}
+
+        {champions.length > 0 && (
+  <div className="mt-4 rounded-sm border border-ink/10 bg-lab-50/50 p-4 dark:border-dark-border dark:bg-dark-surface/40">
+    <p className="label-tag text-lab-700 dark:text-lab-500">This week's champions</p>
+    <div className="mt-2 space-y-1">
+      {champions.map((c, i) => (
+        <div key={c.period} className="flex items-center justify-between text-sm">
+          <span className="text-ink-soft dark:text-dark-ink-soft">Round {i + 1}: {c.name}</span>
+          <span className="font-semibold text-lab-800 dark:text-dark-ink">{c.score} correct</span>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
 
         {phase === "intro" && (
           <motion.div
