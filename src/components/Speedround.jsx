@@ -7,7 +7,7 @@ import { getCurrentPeriodId } from "../utils/periodId";
 
 const WEEK_ID = getCurrentPeriodId(2); 
 const ROUND_SECONDS = 60;
-const QUESTIONS_PER_ROUND = 12;
+const QUESTIONS_PER_ROUND = 15;
 
 const TERM_POOL = [
   { term: "Hemolysis", options: ["Destruction of red blood cells", "Clotting of blood", "White cell increase", "Platelet clumping"], correctIndex: 0 },
