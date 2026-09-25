@@ -150,7 +150,7 @@ useEffect(() => {
 }, [toast]);
 
   function loadLeaderboard(full = false) {
-  fetch(`${API_BASE_URL}/api/quiz/leaderboard?week=${encodeURIComponent(WEEK_ID)}${full ? "&full=true" : ""}`)
+  fetch(`${API_BASE_URL}/api/bingo/leaderboard${full ? "?full=true" : ""}`)
     .then((res) => res.json())
     .then((data) => setLeaderboard(data.leaderboard || []));
 }
