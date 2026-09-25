@@ -15,8 +15,8 @@ export default function About() {
           </div>
           <div className="space-y-5 text-lg leading-relaxed text-ink-soft dark:text-dark-ink-soft">
             <p>
-              MUTMLSA is the official student association for the Department
-              of Medical Laboratory Science at Murang'a University of
+              MUTMLSA is the official student association of
+              the Medical Laboratory Sciences students at Murang'a University of
               Technology. We exist to complement classroom learning with
               hands-on exposure, mentorship, and a genuine sense of
               community among lab science students.
