@@ -95,12 +95,13 @@ export default function SpeedRound() {
   const [existingAttempt, setExistingAttempt] = useState(null);
   const [checking, setChecking] = useState(false);
   const timerRef = useRef(null);
-  const [champions, setChampions] = useState([]);
+  const [periods, setPeriods] = useState([]);
+  const [selectedPeriod, setSelectedPeriod] = useState(null);
   const [showAllLeaderboard, setShowAllLeaderboard] = useState(false);
 
 useEffect(() => {
   loadLeaderboard();
-  loadChampions();
+  loadPeriods();
 }, []);
   
 
@@ -114,10 +115,13 @@ useEffect(() => {
     .then((data) => setLeaderboard(data.leaderboard || []));
 }
 
-  function loadChampions() {
-  fetch(`${API_BASE_URL}/api/sprint/weekly-champions`)
+  function loadPeriods() {
+  fetch(`${API_BASE_URL}/api/quiz/champions-by-period`)
     .then((res) => res.json())
-    .then((data) => setChampions(data.champions || []));
+    .then((data) => {
+      setPeriods(data.periods || []);
+      if (data.periods?.length) setSelectedPeriod(data.periods[0].period);
+    });
 }
 
 function toggleLeaderboardView() {
@@ -242,16 +246,33 @@ function toggleLeaderboardView() {
           </div>
         )}
 
-        {champions.length > 0 && (
+        {periods.length > 0 && (
   <div className="mt-4 rounded-sm border border-ink/10 bg-lab-50/50 p-4 dark:border-dark-border dark:bg-dark-surface/40">
-    <p className="label-tag text-lab-700 dark:text-lab-500">This week's champions</p>
+    <div className="flex items-center justify-between">
+      <p className="label-tag text-lab-700 dark:text-lab-500">Champions</p>
+      <select
+        value={selectedPeriod || ""}
+        onChange={(e) => setSelectedPeriod(e.target.value)}
+        className="rounded-sm border border-ink/15 bg-transparent px-2 py-1 text-xs dark:border-dark-border dark:text-dark-ink"
+      >
+        {periods.map((p) => (
+          <option key={p.period} value={p.period}>{p.label}</option>
+        ))}
+      </select>
+    </div>
     <div className="mt-2 space-y-1">
-      {champions.map((c, i) => (
-        <div key={c.period} className="flex items-center justify-between text-sm">
-          <span className="text-ink-soft dark:text-dark-ink-soft">Round {i + 1}: {c.name}</span>
-          <span className="font-semibold text-lab-800 dark:text-dark-ink">{c.score} correct</span>
-        </div>
-      ))}
+      {periods
+        .find((p) => p.period === selectedPeriod)
+        ?.top.map((entry, i) => (
+          <div key={i} className="flex items-center justify-between text-sm">
+            <span className="text-ink-soft dark:text-dark-ink-soft">
+              {["🥇", "🥈", "🥉"][i]} {entry.name}
+            </span>
+            <span className="font-semibold text-lab-800 dark:text-dark-ink">
+              {entry.score}/{entry.total}
+            </span>
+          </div>
+        ))}
     </div>
   </div>
 )}
