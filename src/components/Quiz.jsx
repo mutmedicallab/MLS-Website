@@ -275,33 +275,27 @@ function loadPeriods() {
           </div>
         )}
 
-        {periods.length > 0 && (
+       {periods.length > 0 && (
   <div className="mt-4 rounded-sm border border-ink/10 bg-lab-50/50 p-4 dark:border-dark-border dark:bg-dark-surface/40">
-    <div className="flex items-center justify-between">
-      <p className="label-tag text-lab-700 dark:text-lab-500">Champions</p>
-      <select
-        value={selectedPeriod || ""}
-        onChange={(e) => setSelectedPeriod(e.target.value)}
-        className="rounded-sm border border-ink/15 bg-transparent px-2 py-1 text-xs dark:border-dark-border dark:text-dark-ink"
-      >
-        {periods.map((p) => (
-          <option key={p.period} value={p.period}>{p.label}</option>
-        ))}
-      </select>
-    </div>
-    <div className="mt-2 space-y-1">
-      {periods
-        .find((p) => p.period === selectedPeriod)
-        ?.top.map((entry, i) => (
-          <div key={i} className="flex items-center justify-between text-sm">
-            <span className="text-ink-soft dark:text-dark-ink-soft">
-              {["🥇", "🥈", "🥉"][i]} {entry.name}
-            </span>
-            <span className="font-semibold text-lab-800 dark:text-dark-ink">
-              {entry.score}/{entry.total}
-            </span>
+    <p className="label-tag text-lab-700 dark:text-lab-500">This week's champions</p>
+    <div className="mt-3 space-y-4">
+      {periods.slice(0, 4).map((p) => (
+        <div key={p.period}>
+          <p className="label-tag text-ink-soft dark:text-dark-ink-soft">{p.label}</p>
+          <div className="mt-1 space-y-1">
+            {p.top.map((entry, i) => (
+              <div key={i} className="flex items-center justify-between text-sm">
+                <span className="text-ink-soft dark:text-dark-ink-soft">
+                  {["🥇", "🥈", "🥉"][i]} {entry.name}
+                </span>
+                <span className="font-semibold text-lab-800 dark:text-dark-ink">
+                  {entry.score}/{entry.total}
+                </span>
+              </div>
+            ))}
           </div>
-        ))}
+        </div>
+      ))}
     </div>
   </div>
 )}

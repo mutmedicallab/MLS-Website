@@ -135,6 +135,9 @@ export default function AdminPortal() {
   const [searchTerm, setSearchTerm] = useState("");
   const [subscriberSearch, setSubscriberSearch] = useState("");
   const [flashId, setFlashId] = useState(null);
+  const [events, setEvents] = useState([]);
+  const [eventForm, setEventForm] = useState({ dateLabel: "", tag: "", title: "", description: "", sortOrder: 0 });
+  const [editingEventId, setEditingEventId] = useState(null);
 
   const [notifyTitle, setNotifyTitle] = useState("");
   const [notifyBody, setNotifyBody] = useState("");
@@ -214,6 +217,32 @@ export default function AdminPortal() {
     setFlashId(id);
     setTimeout(() => setFlashId(null), 800);
   }
+
+  async function saveEvent(e) {
+  e.preventDefault();
+  const path = editingEventId ? `/api/events/${editingEventId}` : "/api/events";
+  await authedFetch(path, {
+    method: editingEventId ? "PATCH" : "POST",
+    body: JSON.stringify(eventForm),
+  });
+  setEventForm({ dateLabel: "", tag: "", title: "", description: "", sortOrder: 0 });
+  setEditingEventId(null);
+  loadData(true);
+}
+
+function editEvent(ev) {
+  setEditingEventId(ev.id);
+  setEventForm({
+    dateLabel: ev.date_label, tag: ev.tag || "", title: ev.title,
+    description: ev.description || "", sortOrder: ev.sort_order,
+  });
+}
+
+async function deleteEventRow(id) {
+  if (!confirm("Delete this event?")) return;
+  await authedFetch(`/api/events/${id}`, { method: "DELETE" });
+  loadData(true);
+}
 
   async function togglePayment(member) {
     await authedFetch(`/api/admin/members/${member.id}/payment`, {
