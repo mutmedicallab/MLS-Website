@@ -4,131 +4,30 @@ import confetti from "canvas-confetti";
 import { API_BASE_URL } from "../config/api";
 import { getCurrentPeriodId } from "../utils/periodId";
 
-const WEEK_ID = getCurrentPeriodId(2); 
+const WEEK_ID = getCurrentPeriodId(2);
 const QUESTIONS_PER_ATTEMPT = 5;
 
 const QUESTION_POOL = [
-  {
-    type: "image_id",
-    imageUrl: "/quiz/plasmodium-falciparum.jpg",
-    prompt: "What organism is shown in this blood smear?",
-    options: ["Plasmodium falciparum", "Plasmodium vivax", "Trypanosoma brucei", "Leishmania donovani"],
-    correctIndex: 0,
-  },
-  {
-    type: "case_study",
-    prompt: "A 24-year-old presents with intermittent fever, chills, and headache after returning from a trip to a malaria-endemic region two weeks ago. A blood film shows ring-form trophozoites with multiple infections per cell and no schizonts seen. Which organism best fits this picture?",
-    options: ["Plasmodium falciparum", "Plasmodium malariae", "Plasmodium ovale", "Plasmodium knowlesi"],
-    correctIndex: 0,
-  },
-  {
-    type: "case_study",
-    prompt: "A venipuncture sample is collected into the wrong order of tubes, and a coagulation (citrate) tube is drawn after an EDTA tube using the same needle without discarding a clear tube first. What is the most likely consequence for the coagulation results?",
-    options: ["Falsely prolonged clotting times due to EDTA contamination", "No effect on results", "Falsely shortened clotting times", "Hemolysis only, coagulation results unaffected"],
-    correctIndex: 0,
-  },
-  {
-    type: "case_study",
-    prompt: "A hemolyzed serum sample is received for a potassium test. What effect does hemolysis typically have on the reported potassium level?",
-    options: ["Falsely elevated, since potassium leaks out of ruptured red cells", "Falsely decreased", "No effect on potassium specifically", "Result becomes unmeasurable"],
-    correctIndex: 0,
-  },
-  {
-    type: "case_study",
-    prompt: "A Gram stain of a sputum sample shows gram-positive cocci in chains. Which organism group does this description best fit?",
-    options: ["Streptococcus species", "Staphylococcus species", "Neisseria species", "Escherichia coli"],
-    correctIndex: 0,
-  },
-  {
-    type: "case_study",
-    prompt: "A CBC shows a markedly elevated white cell count with a predominance of immature granulocytes ('left shift'). This pattern is most classically associated with which of the following?",
-    options: ["An acute bacterial infection", "A viral infection", "Iron deficiency anemia", "A normal healthy adult"],
-    correctIndex: 0,
-  },
-  {
-    type: "case_study",
-    prompt: "A patient's blood sample shows rouleaux formation (red cells stacking like coins) on the peripheral smear. This finding is often associated with which of the following?",
-    options: ["Elevated plasma protein levels (e.g. multiple myeloma)", "Iron deficiency", "A normal finding with no clinical significance", "Acute blood loss"],
-    correctIndex: 0,
-  },
-  {
-    type: "case_study",
-    prompt: "A patient's stool sample is requested for ova and parasite examination. Which of the following best describes the purpose of this test?",
-    options: ["To detect parasitic worms or their eggs in the digestive tract", "To measure blood glucose levels", "To assess kidney function", "To test for a bacterial throat infection"],
-    correctIndex: 0,
-  },
-  {
-    type: "case_study",
-    prompt: "A blood sample is collected and, due to a delay in processing, is left standing uncentrifuged at room temperature for several hours before glucose testing. What is the most likely effect on the glucose result?",
-    options: ["Falsely decreased, since red and white cells continue to consume glucose", "Falsely increased", "No effect at all", "The sample becomes impossible to test"],
-    correctIndex: 0,
-  },
-  {
-    type: "case_study",
-    prompt: "A urinalysis dipstick shows a strongly positive result for nitrites. This finding is most suggestive of which of the following?",
-    options: ["A bacterial urinary tract infection", "Diabetes", "Kidney stones", "Dehydration only"],
-    correctIndex: 0,
-  },
-  {
-    type: "case_study",
-    prompt: "A patient's coagulation panel shows a prolonged bleeding time but a normal platelet count. Which of the following is a more likely explanation than a low platelet count?",
-    options: ["A platelet function disorder rather than a platelet number problem", "Anemia", "A bacterial infection", "Elevated white cell count"],
-    correctIndex: 0,
-  },
-  {
-    type: "case_study",
-    prompt: "A patient's ESR (erythrocyte sedimentation rate) comes back markedly elevated. This finding is generally most consistent with which of the following?",
-    options: ["Ongoing inflammation or infection somewhere in the body", "A perfectly healthy result", "Dehydration", "A clotting factor deficiency"],
-    correctIndex: 0,
-  },
-  {
-    type: "case_study",
-    prompt: "A blood culture bottle is inoculated and flagged as 'positive' by the automated system after overnight incubation. What is the appropriate next laboratory step?",
-    options: ["Perform a Gram stain and subculture to identify the organism", "Report the result immediately without further testing", "Discard the bottle, since a positive flag is often an error", "Repeat the same blood culture from the same bottle only"],
-    correctIndex: 0,
-  },
-  {
-    type: "case_study",
-    prompt: "A liver function panel shows markedly elevated ALT and AST, with a normal bilirubin. This pattern is most consistent with which of the following?",
-    options: ["Hepatocellular (liver cell) damage", "A bile duct obstruction as the primary cause", "A kidney function problem", "A clotting disorder"],
-    correctIndex: 0,
-  },
-  {
-    type: "case_study",
-    prompt: "A patient's blood group is being determined, and their red cells agglutinate with both anti-A and anti-B reagents. What blood group does this indicate?",
-    options: ["AB", "O", "A", "B"],
-    correctIndex: 0,
-  },
-  {
-    type: "case_study",
-    prompt: "A histology lab receives a tissue biopsy for diagnosis. Before sectioning and staining, the tissue must first be fixed. What is the main purpose of fixation?",
-    options: ["To preserve tissue structure and prevent decomposition", "To stain the tissue for viewing", "To dissolve unwanted fat from the sample", "To sterilize the tissue for storage"],
-    correctIndex: 0,
-  },
-  {
-    type: "case_study",
-    prompt: "A Pap smear result is reported as showing 'atypical squamous cells.' What does this result generally indicate?",
-    options: ["Cell changes that need further evaluation, not necessarily cancer", "A confirmed diagnosis of cervical cancer", "A completely normal result", "A bacterial infection only"],
-    correctIndex: 0,
-  },
-  {
-    type: "case_study",
-    prompt: "A newborn is tested for bilirubin due to visible jaundice. Why is monitoring bilirubin especially important in newborns?",
-    options: ["Very high levels can be toxic to the developing brain", "It has no real clinical significance in newborns", "It only matters for adults with liver disease", "It's tested purely for research purposes"],
-    correctIndex: 0,
-  },
-  {
-    type: "case_study",
-    prompt: "A patient on long-term anticoagulant therapy (e.g. warfarin) has their PT/INR checked regularly. Why is this monitoring necessary?",
-    options: ["To ensure the dose keeps clotting time in a safe therapeutic range", "Because the test has no real clinical use", "To measure red blood cell count instead", "Because anticoagulants affect glucose levels"],
-    correctIndex: 0,
-  },
-  {
-    type: "case_study",
-    prompt: "A stool sample for occult blood testing comes back positive. What does this result most directly suggest?",
-    options: ["The possible presence of hidden (non-visible) bleeding in the digestive tract", "A confirmed parasitic infection", "Normal healthy digestion", "A kidney function problem"],
-    correctIndex: 0,
-  },
+  { type: "image_id", imageUrl: "/quiz/plasmodium-falciparum.jpg", prompt: "What organism is shown in this blood smear?", options: ["Plasmodium falciparum", "Plasmodium vivax", "Trypanosoma brucei", "Leishmania donovani"], correctIndex: 0 },
+  { type: "case_study", prompt: "A 24-year-old presents with intermittent fever, chills, and headache after returning from a trip to a malaria-endemic region two weeks ago. A blood film shows ring-form trophozoites with multiple infections per cell and no schizonts seen. Which organism best fits this picture?", options: ["Plasmodium falciparum", "Plasmodium malariae", "Plasmodium ovale", "Plasmodium knowlesi"], correctIndex: 0 },
+  { type: "case_study", prompt: "A venipuncture sample is collected into the wrong order of tubes, and a coagulation (citrate) tube is drawn after an EDTA tube using the same needle without discarding a clear tube first. What is the most likely consequence for the coagulation results?", options: ["Falsely prolonged clotting times due to EDTA contamination", "No effect on results", "Falsely shortened clotting times", "Hemolysis only, coagulation results unaffected"], correctIndex: 0 },
+  { type: "case_study", prompt: "A hemolyzed serum sample is received for a potassium test. What effect does hemolysis typically have on the reported potassium level?", options: ["Falsely elevated, since potassium leaks out of ruptured red cells", "Falsely decreased", "No effect on potassium specifically", "Result becomes unmeasurable"], correctIndex: 0 },
+  { type: "case_study", prompt: "A Gram stain of a sputum sample shows gram-positive cocci in chains. Which organism group does this description best fit?", options: ["Streptococcus species", "Staphylococcus species", "Neisseria species", "Escherichia coli"], correctIndex: 0 },
+  { type: "case_study", prompt: "A CBC shows a markedly elevated white cell count with a predominance of immature granulocytes ('left shift'). This pattern is most classically associated with which of the following?", options: ["An acute bacterial infection", "A viral infection", "Iron deficiency anemia", "A normal healthy adult"], correctIndex: 0 },
+  { type: "case_study", prompt: "A patient's blood sample shows rouleaux formation (red cells stacking like coins) on the peripheral smear. This finding is often associated with which of the following?", options: ["Elevated plasma protein levels (e.g. multiple myeloma)", "Iron deficiency", "A normal finding with no clinical significance", "Acute blood loss"], correctIndex: 0 },
+  { type: "case_study", prompt: "A patient's stool sample is requested for ova and parasite examination. Which of the following best describes the purpose of this test?", options: ["To detect parasitic worms or their eggs in the digestive tract", "To measure blood glucose levels", "To assess kidney function", "To test for a bacterial throat infection"], correctIndex: 0 },
+  { type: "case_study", prompt: "A blood sample is collected and, due to a delay in processing, is left standing uncentrifuged at room temperature for several hours before glucose testing. What is the most likely effect on the glucose result?", options: ["Falsely decreased, since red and white cells continue to consume glucose", "Falsely increased", "No effect at all", "The sample becomes impossible to test"], correctIndex: 0 },
+  { type: "case_study", prompt: "A urinalysis dipstick shows a strongly positive result for nitrites. This finding is most suggestive of which of the following?", options: ["A bacterial urinary tract infection", "Diabetes", "Kidney stones", "Dehydration only"], correctIndex: 0 },
+  { type: "case_study", prompt: "A patient's coagulation panel shows a prolonged bleeding time but a normal platelet count. Which of the following is a more likely explanation than a low platelet count?", options: ["A platelet function disorder rather than a platelet number problem", "Anemia", "A bacterial infection", "Elevated white cell count"], correctIndex: 0 },
+  { type: "case_study", prompt: "A patient's ESR (erythrocyte sedimentation rate) comes back markedly elevated. This finding is generally most consistent with which of the following?", options: ["Ongoing inflammation or infection somewhere in the body", "A perfectly healthy result", "Dehydration", "A clotting factor deficiency"], correctIndex: 0 },
+  { type: "case_study", prompt: "A blood culture bottle is inoculated and flagged as 'positive' by the automated system after overnight incubation. What is the appropriate next laboratory step?", options: ["Perform a Gram stain and subculture to identify the organism", "Report the result immediately without further testing", "Discard the bottle, since a positive flag is often an error", "Repeat the same blood culture from the same bottle only"], correctIndex: 0 },
+  { type: "case_study", prompt: "A liver function panel shows markedly elevated ALT and AST, with a normal bilirubin. This pattern is most consistent with which of the following?", options: ["Hepatocellular (liver cell) damage", "A bile duct obstruction as the primary cause", "A kidney function problem", "A clotting disorder"], correctIndex: 0 },
+  { type: "case_study", prompt: "A patient's blood group is being determined, and their red cells agglutinate with both anti-A and anti-B reagents. What blood group does this indicate?", options: ["AB", "O", "A", "B"], correctIndex: 0 },
+  { type: "case_study", prompt: "A histology lab receives a tissue biopsy for diagnosis. Before sectioning and staining, the tissue must first be fixed. What is the main purpose of fixation?", options: ["To preserve tissue structure and prevent decomposition", "To stain the tissue for viewing", "To dissolve unwanted fat from the sample", "To sterilize the tissue for storage"], correctIndex: 0 },
+  { type: "case_study", prompt: "A Pap smear result is reported as showing 'atypical squamous cells.' What does this result generally indicate?", options: ["Cell changes that need further evaluation, not necessarily cancer", "A confirmed diagnosis of cervical cancer", "A completely normal result", "A bacterial infection only"], correctIndex: 0 },
+  { type: "case_study", prompt: "A newborn is tested for bilirubin due to visible jaundice. Why is monitoring bilirubin especially important in newborns?", options: ["Very high levels can be toxic to the developing brain", "It has no real clinical significance in newborns", "It only matters for adults with liver disease", "It's tested purely for research purposes"], correctIndex: 0 },
+  { type: "case_study", prompt: "A patient on long-term anticoagulant therapy (e.g. warfarin) has their PT/INR checked regularly. Why is this monitoring necessary?", options: ["To ensure the dose keeps clotting time in a safe therapeutic range", "Because the test has no real clinical use", "To measure red blood cell count instead", "Because anticoagulants affect glucose levels"], correctIndex: 0 },
+  { type: "case_study", prompt: "A stool sample for occult blood testing comes back positive. What does this result most directly suggest?", options: ["The possible presence of hidden (non-visible) bleeding in the digestive tract", "A confirmed parasitic infection", "Normal healthy digestion", "A kidney function problem"], correctIndex: 0 },
 ];
 
 function shuffle(arr) {
@@ -149,31 +48,26 @@ export default function Quiz() {
   const [submitted, setSubmitted] = useState(false);
   const [result, setResult] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
+  const [periods, setPeriods] = useState([]);
   const [existingAttempt, setExistingAttempt] = useState(null);
   const [checking, setChecking] = useState(false);
-  const [showAllLeaderboard, setShowAllLeaderboard] = useState(false);
-  const [periods, setPeriods] = useState([]);
-  const [selectedPeriod, setSelectedPeriod] = useState(null);
 
   useEffect(() => {
-  loadLeaderboard();
-  loadPeriods();
-}, []);
+    loadLeaderboard();
+    loadPeriods();
+  }, []);
 
-  function loadLeaderboard(full = false) {
-  fetch(`${API_BASE_URL}/api/quiz/leaderboard?week=${encodeURIComponent(WEEK_ID)}${full ? "&full=true" : ""}`)
-    .then((res) => res.json())
-    .then((data) => setLeaderboard(data.leaderboard || []));
-}
+  function loadLeaderboard() {
+    fetch(`${API_BASE_URL}/api/quiz/leaderboard?week=${encodeURIComponent(WEEK_ID)}`)
+      .then((res) => res.json())
+      .then((data) => setLeaderboard(data.leaderboard || []));
+  }
 
-function loadPeriods() {
-  fetch(`${API_BASE_URL}/api/quiz/champions-by-period`)
-    .then((res) => res.json())
-    .then((data) => {
-      setPeriods(data.periods || []);
-      if (data.periods?.length) setSelectedPeriod(data.periods[0].period);
-    });
-}
+  function loadPeriods() {
+    fetch(`${API_BASE_URL}/api/quiz/champions-by-period`)
+      .then((res) => res.json())
+      .then((data) => setPeriods(data.periods || []));
+  }
 
   async function checkExistingAndStart(e) {
     e.preventDefault();
@@ -206,11 +100,6 @@ function loadPeriods() {
       finishQuiz();
     }
   }
-  function toggleLeaderboardView() {
-  const next = !showAllLeaderboard;
-  setShowAllLeaderboard(next);
-  loadLeaderboard(next);
-}
 
   async function finishQuiz() {
     const score = questions.reduce(
@@ -231,10 +120,12 @@ function loadPeriods() {
       body: JSON.stringify({ week: WEEK_ID, name: name.trim(), score, total }),
     });
     loadLeaderboard();
+    loadPeriods();
   }
 
   const currentQuestion = questions[step];
   const currentAnswer = answers[step];
+  const currentLeader = leaderboard[0];
 
   return (
     <section id="quiz" className="border-t border-ink/10 py-20 dark:border-dark-border md:py-28">
@@ -245,12 +136,21 @@ function loadPeriods() {
         </h2>
         <p className="mt-3 max-w-xl text-ink-soft dark:text-dark-ink-soft">
           {QUESTIONS_PER_ATTEMPT} questions, drawn at random from a much larger pool — identification
-          and case-based reasoning. One attempt per person per week.
+          and case-based reasoning. One attempt per person per round.
         </p>
 
+        {currentLeader && (
+          <div className="mt-6 flex items-center justify-between rounded-sm border border-coral-500/30 bg-coral-500/5 px-4 py-3">
+            <span className="label-tag text-coral-600">Leading this round</span>
+            <span className="text-sm font-semibold text-lab-900 dark:text-dark-ink">
+              {currentLeader.name} · {currentLeader.score}/{currentLeader.total}
+            </span>
+          </div>
+        )}
+
         {leaderboard.length > 0 && (
-          <div className="mt-6 rounded-sm border border-ink/10 bg-lab-50/50 p-4 dark:border-dark-border dark:bg-dark-surface/40">
-            <p className="label-tag text-lab-700 dark:text-lab-500">Leaderboard</p>
+          <div className="mt-4 rounded-sm border border-ink/10 bg-lab-50/50 p-4 dark:border-dark-border dark:bg-dark-surface/40">
+            <p className="label-tag text-lab-700 dark:text-lab-500">Current round leaderboard</p>
             <div className="mt-2 space-y-1">
               {leaderboard.map((entry, i) => (
                 <div key={entry.id} className="flex items-center justify-between text-sm">
@@ -262,43 +162,34 @@ function loadPeriods() {
                   </span>
                 </div>
               ))}
-              {leaderboard.length >= 10 && (
-  <button
-    type="button"
-    onClick={toggleLeaderboardView}
-    className="label-tag mt-2 text-lab-700 underline underline-offset-4 dark:text-lab-500"
-  >
-    {showAllLeaderboard ? "Show top 10 only" : "Show everyone"}
-  </button>
-)}
             </div>
           </div>
         )}
 
-       {periods.length > 0 && (
-  <div className="mt-4 rounded-sm border border-ink/10 bg-lab-50/50 p-4 dark:border-dark-border dark:bg-dark-surface/40">
-    <p className="label-tag text-lab-700 dark:text-lab-500">This week's champions</p>
-    <div className="mt-3 space-y-4">
-      {periods.slice(0, 4).map((p) => (
-        <div key={p.period}>
-          <p className="label-tag text-ink-soft dark:text-dark-ink-soft">{p.label}</p>
-          <div className="mt-1 space-y-1">
-            {p.top.map((entry, i) => (
-              <div key={i} className="flex items-center justify-between text-sm">
-                <span className="text-ink-soft dark:text-dark-ink-soft">
-                  {["🥇", "🥈", "🥉"][i]} {entry.name}
-                </span>
-                <span className="font-semibold text-lab-800 dark:text-dark-ink">
-                  {entry.score}/{entry.total}
-                </span>
-              </div>
-            ))}
+        {periods.length > 0 && (
+          <div className="mt-4 rounded-sm border border-ink/10 bg-lab-50/50 p-4 dark:border-dark-border dark:bg-dark-surface/40">
+            <p className="label-tag text-lab-700 dark:text-lab-500">Recent round champions</p>
+            <div className="mt-3 space-y-4">
+              {periods.slice(0, 4).map((p) => (
+                <div key={p.period}>
+                  <p className="label-tag text-ink-soft dark:text-dark-ink-soft">{p.label}</p>
+                  <div className="mt-1 space-y-1">
+                    {p.top.map((entry, i) => (
+                      <div key={i} className="flex items-center justify-between text-sm">
+                        <span className="text-ink-soft dark:text-dark-ink-soft">
+                          {["🥇", "🥈", "🥉"][i]} {entry.name}
+                        </span>
+                        <span className="font-semibold text-lab-800 dark:text-dark-ink">
+                          {entry.score}/{entry.total}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
-    </div>
-  </div>
-)}
+        )}
 
         {!started && !submitted && (
           <motion.div
@@ -327,8 +218,8 @@ function loadPeriods() {
 
             {existingAttempt && (
               <p className="mt-3 text-sm text-coral-600">
-                You've already played this week's quiz — scored {existingAttempt.score}/
-                {existingAttempt.total}. Come back next week for a new one.
+                You've already played this round — scored {existingAttempt.score}/
+                {existingAttempt.total}. Come back next round for a new one.
               </p>
             )}
           </motion.div>
@@ -415,7 +306,7 @@ function loadPeriods() {
               <p className="mt-2 text-sm text-ink-soft dark:text-dark-ink-soft">
                 {result.score === result.total
                   ? "Perfect score — nicely done."
-                  : "Good effort — see the leaderboard above, and try again next week."}
+                  : "Good effort — see the leaderboard above, and try again next round."}
               </p>
             </motion.div>
           )}

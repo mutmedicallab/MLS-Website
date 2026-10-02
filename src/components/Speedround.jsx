@@ -4,8 +4,7 @@ import confetti from "canvas-confetti";
 import { API_BASE_URL } from "../config/api";
 import { getCurrentPeriodId } from "../utils/periodId";
 
-
-const WEEK_ID = getCurrentPeriodId(2); 
+const WEEK_ID = getCurrentPeriodId(2);
 const ROUND_SECONDS = 60;
 const QUESTIONS_PER_ROUND = 15;
 
@@ -92,43 +91,31 @@ export default function SpeedRound() {
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(ROUND_SECONDS);
   const [leaderboard, setLeaderboard] = useState([]);
+  const [periods, setPeriods] = useState([]);
   const [existingAttempt, setExistingAttempt] = useState(null);
   const [checking, setChecking] = useState(false);
   const timerRef = useRef(null);
-  const [periods, setPeriods] = useState([]);
-  const [selectedPeriod, setSelectedPeriod] = useState(null);
-  const [showAllLeaderboard, setShowAllLeaderboard] = useState(false);
 
-useEffect(() => {
-  loadLeaderboard();
-  loadPeriods();
-}, []);
-  
+  useEffect(() => {
+    loadLeaderboard();
+    loadPeriods();
+  }, []);
 
   useEffect(() => {
     return () => clearInterval(timerRef.current);
   }, []);
 
-  function loadLeaderboard(full = false) {
-  fetch(`${API_BASE_URL}/api/sprint/leaderboard?week=${encodeURIComponent(WEEK_ID)}${full ? "&full=true" : ""}`)
-    .then((res) => res.json())
-    .then((data) => setLeaderboard(data.leaderboard || []));
-}
+  function loadLeaderboard() {
+    fetch(`${API_BASE_URL}/api/sprint/leaderboard?week=${encodeURIComponent(WEEK_ID)}`)
+      .then((res) => res.json())
+      .then((data) => setLeaderboard(data.leaderboard || []));
+  }
 
   function loadPeriods() {
-  fetch(`${API_BASE_URL}/api/sprint/champions-by-period`)
-    .then((res) => res.json())
-    .then((data) => {
-      setPeriods(data.periods || []);
-      if (data.periods?.length) setSelectedPeriod(data.periods[0].period);
-    });
-}
-
-function toggleLeaderboardView() {
-  const next = !showAllLeaderboard;
-  setShowAllLeaderboard(next);
-  loadLeaderboard(next);
-}
+    fetch(`${API_BASE_URL}/api/sprint/champions-by-period`)
+      .then((res) => res.json())
+      .then((data) => setPeriods(data.periods || []));
+  }
 
   const endRound = useCallback(
     async (finalScore) => {
@@ -145,6 +132,7 @@ function toggleLeaderboardView() {
         body: JSON.stringify({ week: WEEK_ID, name: name.trim(), score: finalScore }),
       });
       loadLeaderboard();
+      loadPeriods();
     },
     [name]
   );
@@ -206,22 +194,32 @@ function toggleLeaderboardView() {
   }
 
   const current = round[step];
+  const currentLeader = leaderboard[0];
 
   return (
     <section id="speed-round" className="border-t border-ink/10 py-20 dark:border-dark-border md:py-28">
       <div className="mx-auto max-w-2xl px-5 md:px-8">
-        <span className="label-tag text-lab-700 dark:text-lab-500"> speed round</span>
+        <span className="label-tag text-lab-700 dark:text-lab-500">This week's speed round</span>
         <h2 className="mt-3 font-display text-3xl font-semibold text-lab-900 md:text-4xl dark:text-dark-ink">
           60-Second Term Sprint
         </h2>
         <p className="mt-3 max-w-xl text-ink-soft dark:text-dark-ink-soft">
           Match each term to its correct definition before the clock runs out — {QUESTIONS_PER_ROUND} terms,
-          drawn at random from a much larger pool each time. One attempt per person per week.
+          drawn at random from a much larger pool each time. One attempt per person per round.
         </p>
 
+        {currentLeader && (
+          <div className="mt-6 flex items-center justify-between rounded-sm border border-coral-500/30 bg-coral-500/5 px-4 py-3">
+            <span className="label-tag text-coral-600">Leading this round</span>
+            <span className="text-sm font-semibold text-lab-900 dark:text-dark-ink">
+              {currentLeader.name} · {currentLeader.score} correct
+            </span>
+          </div>
+        )}
+
         {leaderboard.length > 0 && (
-          <div className="mt-6 rounded-sm border border-ink/10 bg-lab-50/50 p-4 dark:border-dark-border dark:bg-dark-surface/40">
-            <p className="label-tag text-lab-700 dark:text-lab-500">Leaderboard</p>
+          <div className="mt-4 rounded-sm border border-ink/10 bg-lab-50/50 p-4 dark:border-dark-border dark:bg-dark-surface/40">
+            <p className="label-tag text-lab-700 dark:text-lab-500">Current round leaderboard</p>
             <div className="mt-2 space-y-1">
               {leaderboard.map((entry, i) => (
                 <div key={entry.id} className="flex items-center justify-between text-sm">
@@ -233,49 +231,34 @@ function toggleLeaderboardView() {
                   </span>
                 </div>
               ))}
-              {leaderboard.length >= 10 && (
-  <button
-    type="button"
-    onClick={toggleLeaderboardView}
-    className="label-tag mt-2 text-lab-700 underline underline-offset-4 dark:text-lab-500"
-  >
-    {showAllLeaderboard ? "Show top 10 only" : "Show everyone"}
-  </button>
-)}
             </div>
           </div>
         )}
 
         {periods.length > 0 && (
-  <div className="mt-4 rounded-sm border border-ink/10 bg-lab-50/50 p-4 dark:border-dark-border dark:bg-dark-surface/40">
-    <div className="flex items-center justify-between">
-      <p className="label-tag text-lab-700 dark:text-lab-500">Champions</p>
-      <select
-        value={selectedPeriod || ""}
-        onChange={(e) => setSelectedPeriod(e.target.value)}
-        className="rounded-sm border border-ink/15 bg-transparent px-2 py-1 text-xs dark:border-dark-border dark:text-dark-ink"
-      >
-        {periods.map((p) => (
-          <option key={p.period} value={p.period}>{p.label}</option>
-        ))}
-      </select>
-    </div>
-    <div className="mt-2 space-y-1">
-      {periods
-        .find((p) => p.period === selectedPeriod)
-        ?.top.map((entry, i) => (
-          <div key={i} className="flex items-center justify-between text-sm">
-            <span className="text-ink-soft dark:text-dark-ink-soft">
-              {["🥇", "🥈", "🥉"][i]} {entry.name}
-            </span>
-            <span className="font-semibold text-lab-800 dark:text-dark-ink">
-              {entry.score}/{entry.total}
-            </span>
+          <div className="mt-4 rounded-sm border border-ink/10 bg-lab-50/50 p-4 dark:border-dark-border dark:bg-dark-surface/40">
+            <p className="label-tag text-lab-700 dark:text-lab-500">Recent round champions</p>
+            <div className="mt-3 space-y-4">
+              {periods.slice(0, 4).map((p) => (
+                <div key={p.period}>
+                  <p className="label-tag text-ink-soft dark:text-dark-ink-soft">{p.label}</p>
+                  <div className="mt-1 space-y-1">
+                    {p.top.map((entry, i) => (
+                      <div key={i} className="flex items-center justify-between text-sm">
+                        <span className="text-ink-soft dark:text-dark-ink-soft">
+                          {["🥇", "🥈", "🥉"][i]} {entry.name}
+                        </span>
+                        <span className="font-semibold text-lab-800 dark:text-dark-ink">
+                          {entry.score} correct
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        ))}
-    </div>
-  </div>
-)}
+        )}
 
         {phase === "intro" && (
           <motion.div
@@ -304,8 +287,8 @@ function toggleLeaderboardView() {
 
             {existingAttempt && (
               <p className="mt-3 text-sm text-coral-600">
-                You've already run this week's sprint — scored {existingAttempt.score} correct.
-                Come back next week for a new round.
+                You've already run this round — scored {existingAttempt.score} correct.
+                Come back next round for a new one.
               </p>
             )}
           </motion.div>
@@ -379,7 +362,7 @@ function toggleLeaderboardView() {
                 {score} correct
               </p>
               <p className="mt-2 text-sm text-ink-soft dark:text-dark-ink-soft">
-                Time's up — check the leaderboard above and come back next week.
+                Time's up — check the leaderboard above and come back next round.
               </p>
             </motion.div>
           )}
@@ -388,6 +371,3 @@ function toggleLeaderboardView() {
     </section>
   );
 }
-
-
-
