@@ -12,8 +12,6 @@ function toWhatsAppNumber(phone) {
   return digits;
 }
 
-// Animates a number counting up from its previous value to the new one
-// whenever `value` changes — used for the section headline counts.
 function CountUp({ value }) {
   const [display, setDisplay] = useState(value);
   const prevRef = useRef(value);
@@ -56,15 +54,9 @@ function SkeletonBlock() {
   );
 }
 
-// A "physical tile" hover/tap effect: slight 3D tilt + lift + shadow,
-// used to wrap every name row (Applications, Members, Subscribers) so
-// they all feel like tiles you can pick up rather than flat list rows.
 function Tile({ children, flash, className = "", ...props }) {
   return (
-    <motion.div
-      style={{ perspective: 700 }}
-      className={className}
-    >
+    <motion.div style={{ perspective: 700 }} className={className}>
       <motion.div
         initial={{ opacity: 0, y: 6 }}
         animate={{
@@ -91,8 +83,6 @@ function Tile({ children, flash, className = "", ...props }) {
   );
 }
 
-// Drag handle isolated from the rest of the tile, so dragging to reorder
-// sections never intercepts a normal vertical scroll on mobile.
 function DraggableSection({ value, children }) {
   const controls = useDragControls();
   return (
@@ -135,22 +125,25 @@ export default function AdminPortal() {
   const [searchTerm, setSearchTerm] = useState("");
   const [subscriberSearch, setSubscriberSearch] = useState("");
   const [flashId, setFlashId] = useState(null);
+
   const [events, setEvents] = useState([]);
   const [eventForm, setEventForm] = useState({ dateLabel: "", tag: "", title: "", description: "", sortOrder: 0 });
   const [editingEventId, setEditingEventId] = useState(null);
+  const [selectedEventForRsvps, setSelectedEventForRsvps] = useState(null);
+  const [eventRsvps, setEventRsvps] = useState([]);
+  const [loadingRsvps, setLoadingRsvps] = useState(false);
 
   const [notifyTitle, setNotifyTitle] = useState("");
   const [notifyBody, setNotifyBody] = useState("");
   const [notifyImage, setNotifyImage] = useState("");
   const [notifySending, setNotifySending] = useState(false);
   const [notifyResult, setNotifyResult] = useState("");
-  const [selectedEventForRsvps, setSelectedEventForRsvps] = useState(null);
-  const [eventRsvps, setEventRsvps] = useState([]);
 
   const [sectionOrder, setSectionOrder] = useState([
     "applications",
     "members",
     "subscribers",
+    "events",
     "notify",
   ]);
 
@@ -172,19 +165,22 @@ export default function AdminPortal() {
     else setLoading(true);
     setError("");
     try {
-      const [appsRes, membersRes, subsRes] = await Promise.all([
+      const [appsRes, membersRes, subsRes, eventsRes] = await Promise.all([
         authedFetch("/api/admin/members/pending-applications"),
         authedFetch(
           `/api/admin/members?academicYear=${encodeURIComponent(CURRENT_PERIOD.academicYear)}&semester=${encodeURIComponent(CURRENT_PERIOD.semester)}`
         ),
         authedFetch("/api/newsletter"),
+        authedFetch("/api/events"),
       ]);
       const appsData = await appsRes.json();
       const membersData = await membersRes.json();
       const subsData = await subsRes.json();
+      const eventsData = await eventsRes.json();
       setApplications(appsData.applications || []);
       setMembers(membersData.members || []);
       setSubscribers(subsData.subscribers || []);
+      setEvents(eventsData.events || []);
       setAuthed(true);
     } catch (err) {
       setError(err.message || "Failed to load data.");
@@ -221,30 +217,57 @@ export default function AdminPortal() {
   }
 
   async function saveEvent(e) {
-  e.preventDefault();
-  const path = editingEventId ? `/api/events/${editingEventId}` : "/api/events";
-  await authedFetch(path, {
-    method: editingEventId ? "PATCH" : "POST",
-    body: JSON.stringify(eventForm),
-  });
-  setEventForm({ dateLabel: "", tag: "", title: "", description: "", sortOrder: 0 });
-  setEditingEventId(null);
-  loadData(true);
-}
+    e.preventDefault();
+    const path = editingEventId ? `/api/events/${editingEventId}` : "/api/events";
+    await authedFetch(path, {
+      method: editingEventId ? "PATCH" : "POST",
+      body: JSON.stringify({
+        ...eventForm,
+        sortOrder: Number(eventForm.sortOrder) || 0, // ensure it's sent as a real number, not a string
+      }),
+    });
+    setEventForm({ dateLabel: "", tag: "", title: "", description: "", sortOrder: 0 });
+    setEditingEventId(null);
+    loadData(true);
+  }
 
-function editEvent(ev) {
-  setEditingEventId(ev.id);
-  setEventForm({
-    dateLabel: ev.date_label, tag: ev.tag || "", title: ev.title,
-    description: ev.description || "", sortOrder: ev.sort_order,
-  });
-}
+  function editEvent(ev) {
+    setEditingEventId(ev.id);
+    setEventForm({
+      dateLabel: ev.date_label,
+      tag: ev.tag || "",
+      title: ev.title,
+      description: ev.description || "",
+      sortOrder: ev.sort_order,
+    });
+  }
 
-async function deleteEventRow(id) {
-  if (!confirm("Delete this event?")) return;
-  await authedFetch(`/api/events/${id}`, { method: "DELETE" });
-  loadData(true);
-}
+  function cancelEditEvent() {
+    setEditingEventId(null);
+    setEventForm({ dateLabel: "", tag: "", title: "", description: "", sortOrder: 0 });
+  }
+
+  async function deleteEventRow(id) {
+    if (!confirm("Delete this event?")) return;
+    await authedFetch(`/api/events/${id}`, { method: "DELETE" });
+    if (selectedEventForRsvps === id) {
+      setSelectedEventForRsvps(null);
+      setEventRsvps([]);
+    }
+    loadData(true);
+  }
+
+  async function loadEventRsvps(eventId) {
+    setSelectedEventForRsvps(eventId);
+    setLoadingRsvps(true);
+    try {
+      const res = await authedFetch(`/api/events/${eventId}/rsvps`);
+      const data = await res.json();
+      setEventRsvps(data.rsvps || []);
+    } finally {
+      setLoadingRsvps(false);
+    }
+  }
 
   async function togglePayment(member) {
     await authedFetch(`/api/admin/members/${member.id}/payment`, {
@@ -263,13 +286,6 @@ async function deleteEventRow(id) {
     flash(member.id);
     loadData(true);
   }
-  
-  async function loadEventRsvps(eventId) {
-  setSelectedEventForRsvps(eventId);
-  const res = await authedFetch(`/api/events/${eventId}/rsvps`);
-  const data = await res.json();
-  setEventRsvps(data.rsvps || []);
-}
 
   async function sendNotification(e) {
     e.preventDefault();
@@ -529,6 +545,159 @@ async function deleteEventRow(id) {
                   </span>
                   <span className="text-xs text-ink-soft dark:text-dark-ink-soft">{s.email}</span>
                 </div>
+              </Tile>
+            ))
+          )}
+        </div>
+      </div>
+    ),
+
+    events: (
+      <div>
+        <h2 className="font-display text-lg font-semibold text-lab-900 dark:text-dark-ink">
+          Events (<CountUp value={events.length} />)
+        </h2>
+
+        <form onSubmit={saveEvent} className="mt-3 max-w-md space-y-2 rounded-sm border border-ink/10 p-3 dark:border-dark-border">
+          <p className="label-tag text-ink-soft dark:text-dark-ink-soft">
+            {editingEventId ? "Editing event" : "Add new event"}
+          </p>
+          <input
+            type="text"
+            value={eventForm.dateLabel}
+            onChange={(e) => setEventForm({ ...eventForm, dateLabel: e.target.value })}
+            placeholder="Date label (e.g. 01 Sep 2026)"
+            required
+            className="w-full rounded-sm border border-ink/15 bg-transparent px-3 py-2 text-sm dark:border-dark-border dark:text-dark-ink"
+          />
+          <input
+            type="text"
+            value={eventForm.tag}
+            onChange={(e) => setEventForm({ ...eventForm, tag: e.target.value })}
+            placeholder="Tag (e.g. Freshers)"
+            className="w-full rounded-sm border border-ink/15 bg-transparent px-3 py-2 text-sm dark:border-dark-border dark:text-dark-ink"
+          />
+          <input
+            type="text"
+            value={eventForm.title}
+            onChange={(e) => setEventForm({ ...eventForm, title: e.target.value })}
+            placeholder="Title"
+            required
+            className="w-full rounded-sm border border-ink/15 bg-transparent px-3 py-2 text-sm dark:border-dark-border dark:text-dark-ink"
+          />
+          <textarea
+            value={eventForm.description}
+            onChange={(e) => setEventForm({ ...eventForm, description: e.target.value })}
+            placeholder="Description"
+            rows={2}
+            className="w-full rounded-sm border border-ink/15 bg-transparent px-3 py-2 text-sm dark:border-dark-border dark:text-dark-ink"
+          />
+          <input
+            type="number"
+            value={eventForm.sortOrder}
+            onChange={(e) => setEventForm({ ...eventForm, sortOrder: e.target.value })}
+            placeholder="Sort order (lower shows first)"
+            className="w-full rounded-sm border border-ink/15 bg-transparent px-3 py-2 text-sm dark:border-dark-border dark:text-dark-ink"
+          />
+          <div className="flex gap-2">
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              type="submit"
+              className="rounded-sm bg-coral-500 px-4 py-2 text-sm font-semibold text-paper"
+            >
+              {editingEventId ? "Save changes" : "Add event"}
+            </motion.button>
+            {editingEventId && (
+              <button
+                type="button"
+                onClick={cancelEditEvent}
+                className="label-tag text-ink-soft dark:text-dark-ink-soft"
+              >
+                Cancel
+              </button>
+            )}
+          </div>
+        </form>
+
+        <div className="mt-4 space-y-2">
+          {refreshing ? (
+            <SkeletonBlock />
+          ) : events.length === 0 ? (
+            <p className="text-sm text-ink-soft dark:text-dark-ink-soft">No events yet.</p>
+          ) : (
+            events.map((ev) => (
+              <Tile key={ev.id}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-lab-900 dark:text-dark-ink">{ev.title}</p>
+                    <p className="text-xs text-ink-soft dark:text-dark-ink-soft">
+                      {ev.date_label} {ev.tag && `· ${ev.tag}`}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => loadEventRsvps(ev.id)}
+                      className="rounded-sm border border-lab-700 px-3 py-1.5 text-xs font-semibold text-lab-700 dark:border-lab-500 dark:text-lab-500"
+                    >
+                      View RSVPs
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => editEvent(ev)}
+                      className="rounded-sm border border-ink/15 px-3 py-1.5 text-xs font-semibold text-ink-soft dark:border-dark-border dark:text-dark-ink-soft"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => deleteEventRow(ev.id)}
+                      className="rounded-sm border border-coral-500 px-3 py-1.5 text-xs font-semibold text-coral-600"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+
+                {selectedEventForRsvps === ev.id && (
+                  <div className="mt-3 border-t border-ink/10 pt-3 dark:border-dark-border">
+                    {loadingRsvps ? (
+                      <SkeletonBlock />
+                    ) : eventRsvps.length === 0 ? (
+                      <p className="text-xs text-ink-soft dark:text-dark-ink-soft">No RSVPs yet.</p>
+                    ) : (
+                      <>
+                        <div className="flex items-center justify-between">
+                          <p className="label-tag text-lab-700 dark:text-lab-500">
+                            {eventRsvps.length} {eventRsvps.length === 1 ? "person" : "people"} going
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const emails = eventRsvps.filter((r) => r.email).map((r) => r.email).join(", ");
+                              if (!emails) {
+                                alert("No emails collected for this event yet.");
+                                return;
+                              }
+                              navigator.clipboard.writeText(emails);
+                              alert("Attendee emails copied — paste into Gmail's BCC field.");
+                            }}
+                            className="label-tag text-lab-700 underline dark:text-lab-500"
+                          >
+                            Copy emails
+                          </button>
+                        </div>
+                        <div className="mt-2 space-y-1">
+                          {eventRsvps.map((r, i) => (
+                            <p key={i} className="text-xs text-ink-soft dark:text-dark-ink-soft">
+                              {r.name}{r.email ? ` — ${r.email}` : ""}
+                            </p>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
               </Tile>
             ))
           )}
