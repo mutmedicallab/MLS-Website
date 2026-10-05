@@ -61,11 +61,12 @@ export default function Events() {
         });
         saveRsvpedEvents(rsvpedEvents.filter((id) => id !== idStr));
       } else {
-        const res = await fetch(`${API_BASE_URL}/api/events/${idStr}/rsvp`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: name.trim() }),
-        });
+        localStorage.setItem("mutmlsa_rsvp_email", email.trim());
+const res = await fetch(`${API_BASE_URL}/api/events/${idStr}/rsvp`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ name: name.trim(), email: email.trim() || undefined }),
+});
         const data = await res.json();
         saveRsvpedEvents([...rsvpedEvents, idStr]);
         if (!data.recognized) setNotRegisteredNudge(true);
@@ -87,14 +88,21 @@ export default function Events() {
         </h2>
 
         <div className="mt-4 max-w-xs">
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Your name (for RSVPs)"
-            className="w-full rounded-sm border border-paper/15 bg-transparent px-3 py-2 text-sm text-paper placeholder:text-paper/40"
-          />
-        </div>
+  <input
+    type="text"
+    value={name}
+    onChange={(e) => setName(e.target.value)}
+    placeholder="Your name (for RSVPs)"
+    className="w-full rounded-sm border border-paper/15 bg-transparent px-3 py-2 text-sm text-paper placeholder:text-paper/40"
+  />
+  <input
+    type="email"
+    value={email}
+    onChange={(e) => setEmail(e.target.value)}
+    placeholder="Your email (optional — for updates)"
+    className="mt-2 w-full rounded-sm border border-paper/15 bg-transparent px-3 py-2 text-sm text-paper placeholder:text-paper/40"
+  />
+</div>
 
         {notRegisteredNudge && (
           <div className="mt-3 flex items-center gap-2 rounded-sm border border-coral-500/40 bg-coral-500/10 px-4 py-2.5 text-sm text-paper/90">
