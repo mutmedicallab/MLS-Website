@@ -114,11 +114,18 @@ export default function Events() {
               const idStr = String(e.id);
               const isGoing = rsvpedEvents.includes(idStr);
               const count = counts[idStr] || 0;
+              const isPast =
+                e.event_date && new Date(e.event_date) < new Date().setHours(0, 0, 0, 0);
               return (
-                <div key={e.id} className="grid gap-3 py-6 sm:grid-cols-[110px_100px_1fr_auto] sm:items-center sm:gap-6">
+                <div
+                  key={e.id}
+                  className="grid gap-3 py-6 sm:grid-cols-[110px_100px_1fr_auto] sm:items-center sm:gap-6"
+                >
                   <span className="font-mono text-sm text-lab-500">{e.date_label}</span>
                   {e.tag && (
-                    <span className="label-tag w-fit rounded-sm bg-paper/10 px-2 py-1 text-coral-500">{e.tag}</span>
+                    <span className="label-tag w-fit rounded-sm bg-paper/10 px-2 py-1 text-coral-500">
+                      {e.tag}
+                    </span>
                   )}
                   <div>
                     <h3 className="font-display text-lg font-semibold text-paper">{e.title}</h3>
@@ -127,17 +134,23 @@ export default function Events() {
                       {count} {count === 1 ? "person" : "people"} going
                     </p>
                   </div>
-                  <motion.button
-                    whileTap={{ scale: 0.95 }}
-                    type="button"
-                    onClick={() => toggleRsvp(e.id)}
-                    disabled={busyEventId === e.id}
-                    className={`rounded-sm px-3 py-1.5 text-xs font-semibold disabled:opacity-50 ${
-                      isGoing ? "bg-lab-600 text-paper" : "border border-coral-500 text-coral-500"
-                    }`}
-                  >
-                    {busyEventId === e.id ? "…" : isGoing ? "Going ✓" : "I'm going"}
-                  </motion.button>
+                  {isPast ? (
+                    <span className="label-tag rounded-sm bg-paper/10 px-3 py-1.5 text-paper/50">
+                      Event passed
+                    </span>
+                  ) : (
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      type="button"
+                      onClick={() => toggleRsvp(e.id)}
+                      disabled={busyEventId === e.id}
+                      className={`rounded-sm px-3 py-1.5 text-xs font-semibold disabled:opacity-50 ${
+                        isGoing ? "bg-lab-600 text-paper" : "border border-coral-500 text-coral-500"
+                      }`}
+                    >
+                      {busyEventId === e.id ? "…" : isGoing ? "Going ✓" : "I'm going"}
+                    </motion.button>
+                  )}
                 </div>
               );
             })}
@@ -147,7 +160,7 @@ export default function Events() {
         <div className="mt-8 flex items-center gap-3 rounded-sm border border-paper/10 bg-paper/5 px-5 py-4">
           <span className="label-tag rounded-sm bg-paper/10 px-2 py-1 text-lab-500">Weekly</span>
           <p className="text-sm text-paper/70">
-            General meetings every <span className="text-paper">Thursday, 5:00 PM</span> —Room 21, Engineering Classes.
+            General meetings every <span className="text-paper">Thursday, 5:00 PM</span> —Blood Transfusion Lab, Science Complex.
           </p>
         </div>
       </div>
