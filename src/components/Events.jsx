@@ -99,7 +99,7 @@ const res = await fetch(`${API_BASE_URL}/api/events/${idStr}/rsvp`, {
     type="email"
     value={email}
     onChange={(e) => setEmail(e.target.value)}
-    placeholder="Your email (optional — for updates)"
+    placeholder="Your email (— for updates)"
     className="mt-2 w-full rounded-sm border border-paper/15 bg-transparent px-3 py-2 text-sm text-paper placeholder:text-paper/40"
   />
 </div>
