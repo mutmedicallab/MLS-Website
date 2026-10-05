@@ -144,6 +144,8 @@ export default function AdminPortal() {
   const [notifyImage, setNotifyImage] = useState("");
   const [notifySending, setNotifySending] = useState(false);
   const [notifyResult, setNotifyResult] = useState("");
+  const [selectedEventForRsvps, setSelectedEventForRsvps] = useState(null);
+  const [eventRsvps, setEventRsvps] = useState([]);
 
   const [sectionOrder, setSectionOrder] = useState([
     "applications",
@@ -261,6 +263,13 @@ async function deleteEventRow(id) {
     flash(member.id);
     loadData(true);
   }
+  
+  async function loadEventRsvps(eventId) {
+  setSelectedEventForRsvps(eventId);
+  const res = await authedFetch(`/api/events/${eventId}/rsvps`);
+  const data = await res.json();
+  setEventRsvps(data.rsvps || []);
+}
 
   async function sendNotification(e) {
     e.preventDefault();

@@ -17,6 +17,7 @@ export default function Events() {
   });
   const [busyEventId, setBusyEventId] = useState(null);
   const [notRegisteredNudge, setNotRegisteredNudge] = useState(false);
+  const [email, setEmail] = useState(() => localStorage.getItem("mutmlsa_rsvp_email") || "");
 
   useEffect(() => {
     loadEvents();
