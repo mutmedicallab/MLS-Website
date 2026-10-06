@@ -382,6 +382,24 @@ const TABS = [
         <h2 className="font-display text-lg font-semibold text-lab-900 dark:text-dark-ink">
           Pending Applications (<CountUp value={applications.length} />)
         </h2>
+
+        <div className="mt-3 flex gap-2">
+  <button type="button" onClick={() => exportToCSV("mutmlsa-applications", applications.map((a) => ({
+    Name: a.full_name, Email: a.email, Year: a.year_of_study || "", Phone: a.phone || "",
+  })))} className="label-tag rounded-sm border border-ink/15 px-3 py-1.5 dark:border-dark-border">
+    Export CSV
+  </button>
+  <button type="button" onClick={() => exportToExcel("mutmlsa-applications", applications.map((a) => ({
+    Name: a.full_name, Email: a.email, Year: a.year_of_study || "", Phone: a.phone || "",
+  })))} className="label-tag rounded-sm border border-ink/15 px-3 py-1.5 dark:border-dark-border">
+    Export Excel
+  </button>
+  <button type="button" onClick={() => exportToPDF("mutmlsa-applications", "Pending Applications", applications.map((a) => ({
+    Name: a.full_name, Email: a.email, Year: a.year_of_study || "",
+  })))} className="label-tag rounded-sm border border-ink/15 px-3 py-1.5 dark:border-dark-border">
+    Export PDF
+  </button>
+</div>
         <div className="mt-3 space-y-2">
           {refreshing ? (
             <SkeletonBlock />
