@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, Reorder, useDragControls } from "motion/react";
 import { API_BASE_URL } from "../config/api";
+import { exportToCSV, exportToExcel, exportToPDF } from "../utils/exportData";
 
 const CURRENT_PERIOD = { academicYear: "2026/2027", semester: "Sem 1" };
 const YEAR_ORDER = ["Y1", "Y2", "Y3", "Y4"];
@@ -443,6 +444,42 @@ const TABS = [
           placeholder="Search by name…"
           className="mt-3 w-full max-w-xs rounded-sm border border-ink/15 bg-transparent px-3 py-2 text-sm dark:border-dark-border dark:text-dark-ink"
         />
+
+        <div className="mt-3 flex gap-2">
+  <button
+    type="button"
+    onClick={() => exportToCSV("mutmlsa-members", filteredMembers.map((m) => ({
+      Name: m.full_name, Year: m.year_of_study || "", Phone: m.phone || "",
+      "Registration Paid": m.registration_paid ? "Yes" : "No",
+      "Semester Paid": m.paidThisPeriod ? "Yes" : "No",
+    })))}
+    className="label-tag rounded-sm border border-ink/15 px-3 py-1.5 dark:border-dark-border"
+  >
+    Export CSV
+  </button>
+  <button
+    type="button"
+    onClick={() => exportToExcel("mutmlsa-members", filteredMembers.map((m) => ({
+      Name: m.full_name, Year: m.year_of_study || "", Phone: m.phone || "",
+      "Registration Paid": m.registration_paid ? "Yes" : "No",
+      "Semester Paid": m.paidThisPeriod ? "Yes" : "No",
+    })))}
+    className="label-tag rounded-sm border border-ink/15 px-3 py-1.5 dark:border-dark-border"
+  >
+    Export Excel
+  </button>
+  <button
+    type="button"
+    onClick={() => exportToPDF("mutmlsa-members", "MUTMLSA Members", filteredMembers.map((m) => ({
+      Name: m.full_name, Year: m.year_of_study || "",
+      "Registration": m.registration_paid ? "Paid" : "Unpaid",
+      "Semester": m.paidThisPeriod ? "Paid" : "Unpaid",
+    })))}
+    className="label-tag rounded-sm border border-ink/15 px-3 py-1.5 dark:border-dark-border"
+  >
+    Export PDF
+  </button>
+</div>
         <div className="mt-3 space-y-6">
           {refreshing ? (
             <SkeletonBlock />
