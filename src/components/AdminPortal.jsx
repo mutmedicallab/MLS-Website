@@ -724,6 +724,7 @@ const TABS = [
                             className="label-tag text-lab-700 underline dark:text-lab-500"
                           >
                             Copy emails
+                            </button>
 
                           <div className="flex items-center justify-between">
   <p className="label-tag text-lab-700 dark:text-lab-500">
@@ -755,7 +756,7 @@ const TABS = [
     </button>
   </div>
 </div>
-                          </button>
+                          
                         </div>
                         <div className="mt-2 space-y-1">
                           {eventRsvps.map((r, i) => (
