@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, Reorder, useDragControls } from "motion/react";
 import { API_BASE_URL } from "../config/api";
+import { exportToCSV, exportToExcel, exportToPDF } from "../utils/exportData";
 
 const CURRENT_PERIOD = { academicYear: "2026/2027", semester: "Sem 1" };
 const YEAR_ORDER = ["Y1", "Y2", "Y3", "Y4"];
@@ -139,13 +140,16 @@ export default function AdminPortal() {
   const [notifySending, setNotifySending] = useState(false);
   const [notifyResult, setNotifyResult] = useState("");
 
-  const [sectionOrder, setSectionOrder] = useState([
-    "applications",
-    "members",
-    "subscribers",
-    "events",
-    "notify",
-  ]);
+ // Replace sectionOrder state with:
+const [activeAdminTab, setActiveAdminTab] = useState("applications");
+
+const TABS = [
+  { key: "applications", label: "Applications" },
+  { key: "members", label: "Members" },
+  { key: "subscribers", label: "Subscribers" },
+  { key: "events", label: "Events" },
+  { key: "notify", label: "Notify" },
+];
 
   async function authedFetch(path, options = {}) {
     const res = await fetch(`${API_BASE_URL}${path}`, {
@@ -849,18 +853,35 @@ export default function AdminPortal() {
         Drag a section by its handle to reorder — your layout, your call.
       </p>
 
-      <Reorder.Group
-        axis="y"
-        values={sectionOrder}
-        onReorder={setSectionOrder}
-        className="mt-3 space-y-4"
-      >
-        {sectionOrder.map((key) => (
-          <DraggableSection key={key} value={key}>
-            {sections[key]}
-          </DraggableSection>
-        ))}
-      </Reorder.Group>
+      <div className="mt-6 flex flex-wrap gap-2 border-b border-ink/10 pb-3 dark:border-dark-border">
+  {TABS.map((tab) => (
+    <button
+      key={tab.key}
+      type="button"
+      onClick={() => setActiveAdminTab(tab.key)}
+      className={`rounded-sm px-3 py-1.5 text-sm font-semibold transition-colors ${
+        activeAdminTab === tab.key
+          ? "bg-coral-500 text-paper"
+          : "text-ink-soft hover:bg-lab-100/60 dark:text-dark-ink-soft dark:hover:bg-dark-surface/60"
+      }`}
+    >
+      {tab.label}
+    </button>
+  ))}
+</div>
+
+<AnimatePresence mode="wait">
+  <motion.div
+    key={activeAdminTab}
+    initial={{ opacity: 0, y: 8 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: -8 }}
+    transition={{ duration: 0.2 }}
+    className="mt-4 rounded-sm border border-ink/10 bg-paper p-5 dark:border-dark-border dark:bg-dark-bg"
+  >
+    {sections[activeAdminTab]}
+  </motion.div>
+</AnimatePresence>
     </div>
   );
 }
