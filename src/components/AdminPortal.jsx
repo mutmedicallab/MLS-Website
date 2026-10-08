@@ -147,8 +147,10 @@ export default function AdminPortal() {
         "Content-Type": "application/json",
       },
     });
-    if (res.status === 401) throw new Error("Wrong admin password.");
-    return res;
+   if (res.status === 401) throw new Error("Wrong admin password.");
+if (res.status === 429) throw new Error("Too many requests — wait a few minutes and try again.");
+if (!res.ok) throw new Error("Something went wrong loading data.");
+return res;
   }
 
   async function loadData(isRefresh = false) {
