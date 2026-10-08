@@ -429,7 +429,7 @@ return res;
                               </a>
                             </>
                           )}
-                          {app.registration_number && ` · ${app.registration_number}`}
+                          
                         </p>
                       </div>
                       <motion.button
