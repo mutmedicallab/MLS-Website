@@ -191,12 +191,13 @@ return res;
       await authedFetch("/api/admin/members", {
         method: "POST",
         body: JSON.stringify({
-          fullName: app.full_name,
-          email: app.email,
-          phone: app.phone,
-          yearOfStudy: app.year_of_study,
-          applicationId: app.id,
-        }),
+  fullName: app.full_name,
+  email: app.email,
+  phone: app.phone,
+  yearOfStudy: app.year_of_study,
+  registrationNumber: app.registration_number,
+  applicationId: app.id,
+}),
       });
       await loadData(true);
     } finally {
@@ -370,6 +371,7 @@ return res;
     Email: a.email,
     Year: a.year_of_study || "",
     Phone: a.phone || "",
+    "Registration No.": a.registration_number || "",
   }));
 
   const memberRows = filteredMembers.map((m) => ({
@@ -427,6 +429,7 @@ return res;
                               </a>
                             </>
                           )}
+                          {app.registration_number && ` · ${app.registration_number}`}
                         </p>
                       </div>
                       <motion.button

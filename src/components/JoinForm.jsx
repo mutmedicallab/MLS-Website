@@ -128,6 +128,15 @@ function Field({ label, name, type = "text", value, onChange, required, placehol
         placeholder={placeholder}
         className="w-full rounded-sm border border-paper/20 bg-paper/5 px-3 py-2 text-sm text-paper placeholder:text-paper/30 focus:border-lab-500 focus:outline-none"
       />
+
+      <input
+  type="text"
+  name="registrationNumber"
+  value={form.registrationNumber}
+  onChange={handleChange}
+  placeholder="Registration number (e.g. MS200/****/****)"
+  className="rounded-sm border border-ink/15 bg-transparent px-3 py-2.5 text-sm dark:border-dark-border dark:text-dark-ink"
+/>
     </div>
   );
 }
