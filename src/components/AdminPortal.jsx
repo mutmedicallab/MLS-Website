@@ -1,10 +1,18 @@
 import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence, Reorder, useDragControls } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { API_BASE_URL } from "../config/api";
 import { exportToCSV, exportToExcel, exportToPDF } from "../utils/exportData";
 
 const CURRENT_PERIOD = { academicYear: "2026/2027", semester: "Sem 1" };
 const YEAR_ORDER = ["Y1", "Y2", "Y3", "Y4"];
+
+const TABS = [
+  { key: "applications", label: "Applications" },
+  { key: "members", label: "Members" },
+  { key: "subscribers", label: "Subscribers" },
+  { key: "events", label: "Events" },
+  { key: "notify", label: "Notify" },
+];
 
 function toWhatsAppNumber(phone) {
   const digits = phone.replace(/\D/g, "");
@@ -84,26 +92,14 @@ function Tile({ children, flash, className = "", ...props }) {
   );
 }
 
-function DraggableSection({ value, children }) {
-  const controls = useDragControls();
+function ExportButtons({ onCSV, onExcel, onPDF }) {
+  const cls = "label-tag rounded-sm border border-ink/15 px-3 py-1.5 dark:border-dark-border";
   return (
-    <Reorder.Item
-      value={value}
-      dragListener={false}
-      dragControls={controls}
-      whileDrag={{ scale: 1.02, boxShadow: "0 8px 24px rgba(0,0,0,0.18)", zIndex: 10 }}
-      className="rounded-sm border border-ink/10 bg-paper p-5 dark:border-dark-border dark:bg-dark-bg"
-    >
-      <div className="mb-3 flex justify-end">
-        <span
-          onPointerDown={(e) => controls.start(e)}
-          className="cursor-grab select-none touch-none text-ink-soft/50 active:cursor-grabbing dark:text-dark-ink-soft/50"
-        >
-          ⠿ drag
-        </span>
-      </div>
-      {children}
-    </Reorder.Item>
+    <div className="mt-3 flex gap-2">
+      <button type="button" onClick={onCSV} className={cls}>Export CSV</button>
+      <button type="button" onClick={onExcel} className={cls}>Export Excel</button>
+      <button type="button" onClick={onPDF} className={cls}>Export PDF</button>
+    </div>
   );
 }
 
@@ -140,16 +136,7 @@ export default function AdminPortal() {
   const [notifySending, setNotifySending] = useState(false);
   const [notifyResult, setNotifyResult] = useState("");
 
- // Replace sectionOrder state with:
-const [activeAdminTab, setActiveAdminTab] = useState("applications");
-
-const TABS = [
-  { key: "applications", label: "Applications" },
-  { key: "members", label: "Members" },
-  { key: "subscribers", label: "Subscribers" },
-  { key: "events", label: "Events" },
-  { key: "notify", label: "Notify" },
-];
+  const [activeAdminTab, setActiveAdminTab] = useState("applications");
 
   async function authedFetch(path, options = {}) {
     const res = await fetch(`${API_BASE_URL}${path}`, {
@@ -227,7 +214,7 @@ const TABS = [
       method: editingEventId ? "PATCH" : "POST",
       body: JSON.stringify({
         ...eventForm,
-        sortOrder: Number(eventForm.sortOrder) || 0, // ensure it's sent as a real number, not a string
+        sortOrder: Number(eventForm.sortOrder) || 0,
       }),
     });
     setEventForm({ dateLabel: "", tag: "", title: "", description: "", sortOrder: 0 });
@@ -376,12 +363,39 @@ const TABS = [
     );
   });
 
+  const applicationRows = applications.map((a) => ({
+    Name: a.full_name,
+    Email: a.email,
+    Year: a.year_of_study || "",
+    Phone: a.phone || "",
+  }));
+
+  const memberRows = filteredMembers.map((m) => ({
+    Name: m.full_name,
+    Year: m.year_of_study || "",
+    Phone: m.phone || "",
+    "Registration Paid": m.registration_paid ? "Yes" : "No",
+    "Semester Paid": m.paidThisPeriod ? "Yes" : "No",
+  }));
+
+  const subscriberRows = filteredSubscribers.map((s) => ({
+    Name: s.full_name || "",
+    Email: s.email,
+  }));
+
   const sections = {
     applications: (
       <div>
         <h2 className="font-display text-lg font-semibold text-lab-900 dark:text-dark-ink">
           Pending Applications (<CountUp value={applications.length} />)
         </h2>
+
+        <ExportButtons
+          onCSV={() => exportToCSV("mutmlsa-applications", applicationRows)}
+          onExcel={() => exportToExcel("mutmlsa-applications", applicationRows)}
+          onPDF={() => exportToPDF("mutmlsa-applications", "Pending Applications", applicationRows)}
+        />
+
         <div className="mt-3 space-y-2">
           {refreshing ? (
             <SkeletonBlock />
@@ -445,23 +459,12 @@ const TABS = [
           className="mt-3 w-full max-w-xs rounded-sm border border-ink/15 bg-transparent px-3 py-2 text-sm dark:border-dark-border dark:text-dark-ink"
         />
 
-        <div className="mt-3 flex gap-2">
-  <button type="button" onClick={() => exportToCSV("mutmlsa-applications", applications.map((a) => ({
-    Name: a.full_name, Email: a.email, Year: a.year_of_study || "", Phone: a.phone || "",
-  })))} className="label-tag rounded-sm border border-ink/15 px-3 py-1.5 dark:border-dark-border">
-    Export CSV
-  </button>
-  <button type="button" onClick={() => exportToExcel("mutmlsa-applications", applications.map((a) => ({
-    Name: a.full_name, Email: a.email, Year: a.year_of_study || "", Phone: a.phone || "",
-  })))} className="label-tag rounded-sm border border-ink/15 px-3 py-1.5 dark:border-dark-border">
-    Export Excel
-  </button>
-  <button type="button" onClick={() => exportToPDF("mutmlsa-applications", "Pending Applications", applications.map((a) => ({
-    Name: a.full_name, Email: a.email, Year: a.year_of_study || "",
-  })))} className="label-tag rounded-sm border border-ink/15 px-3 py-1.5 dark:border-dark-border">
-    Export PDF
-  </button>
-</div>
+        <ExportButtons
+          onCSV={() => exportToCSV("mutmlsa-members", memberRows)}
+          onExcel={() => exportToExcel("mutmlsa-members", memberRows)}
+          onPDF={() => exportToPDF("mutmlsa-members", "MUTMLSA Members", memberRows)}
+        />
+
         <div className="mt-3 space-y-6">
           {refreshing ? (
             <SkeletonBlock />
@@ -514,23 +517,6 @@ const TABS = [
             className="rounded-sm bg-lab-800 px-4 py-2 text-sm font-semibold text-paper dark:bg-lab-600"
           >
             Copy all emails
-           <div className="mt-3 flex gap-2">
-  <button type="button" onClick={() => exportToCSV("mutmlsa-subscribers", filteredSubscribers.map((s) => ({
-    Name: s.full_name || "", Email: s.email,
-  })))} className="label-tag rounded-sm border border-ink/15 px-3 py-1.5 dark:border-dark-border">
-    Export CSV
-  </button>
-  <button type="button" onClick={() => exportToExcel("mutmlsa-subscribers", filteredSubscribers.map((s) => ({
-    Name: s.full_name || "", Email: s.email,
-  })))} className="label-tag rounded-sm border border-ink/15 px-3 py-1.5 dark:border-dark-border">
-    Export Excel
-  </button>
-  <button type="button" onClick={() => exportToPDF("mutmlsa-subscribers", "Newsletter Subscribers", filteredSubscribers.map((s) => ({
-    Name: s.full_name || "", Email: s.email,
-  })))} className="label-tag rounded-sm border border-ink/15 px-3 py-1.5 dark:border-dark-border">
-    Export PDF
-  </button>
-</div>
           </motion.button>
           <motion.button
             whileTap={{ scale: 0.97 }}
@@ -559,6 +545,12 @@ const TABS = [
             Add all applicants to list
           </motion.button>
         </div>
+
+        <ExportButtons
+          onCSV={() => exportToCSV("mutmlsa-subscribers", subscriberRows)}
+          onExcel={() => exportToExcel("mutmlsa-subscribers", subscriberRows)}
+          onPDF={() => exportToPDF("mutmlsa-subscribers", "Newsletter Subscribers", subscriberRows)}
+        />
 
         <input
           type="text"
@@ -706,57 +698,64 @@ const TABS = [
                       <p className="text-xs text-ink-soft dark:text-dark-ink-soft">No RSVPs yet.</p>
                     ) : (
                       <>
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
                           <p className="label-tag text-lab-700 dark:text-lab-500">
                             {eventRsvps.length} {eventRsvps.length === 1 ? "person" : "people"} going
                           </p>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const emails = eventRsvps.filter((r) => r.email).map((r) => r.email).join(", ");
-                              if (!emails) {
-                                alert("No emails collected for this event yet.");
-                                return;
-                              }
-                              navigator.clipboard.writeText(emails);
-                              alert("Attendee emails copied — paste into Gmail's BCC field.");
-                            }}
-                            className="label-tag text-lab-700 underline dark:text-lab-500"
-                          >
-                            Copy emails
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const emails = eventRsvps.filter((r) => r.email).map((r) => r.email).join(", ");
+                                if (!emails) {
+                                  alert("No emails collected for this event yet.");
+                                  return;
+                                }
+                                navigator.clipboard.writeText(emails);
+                                alert("Attendee emails copied — paste into Gmail's BCC field.");
+                              }}
+                              className="label-tag text-lab-700 underline dark:text-lab-500"
+                            >
+                              Copy emails
                             </button>
-
-                          <div className="flex items-center justify-between">
-  <p className="label-tag text-lab-700 dark:text-lab-500">
-    {eventRsvps.length} {eventRsvps.length === 1 ? "person" : "people"} going
-  </p>
-  <div className="flex gap-2">
-    <button type="button" onClick={() => {
-      const emails = eventRsvps.filter((r) => r.email).map((r) => r.email).join(", ");
-      if (!emails) { alert("No emails collected for this event yet."); return; }
-      navigator.clipboard.writeText(emails);
-      alert("Attendee emails copied — paste into Gmail's BCC field.");
-    }} className="label-tag text-lab-700 underline dark:text-lab-500">
-      Copy emails
-    </button>
-    <button type="button" onClick={() => exportToCSV(`mutmlsa-rsvps-${ev.title}`, eventRsvps.map((r) => ({
-      Name: r.name, Email: r.email || "",
-    })))} className="label-tag text-lab-700 underline dark:text-lab-500">
-      CSV
-    </button>
-    <button type="button" onClick={() => exportToExcel(`mutmlsa-rsvps-${ev.title}`, eventRsvps.map((r) => ({
-      Name: r.name, Email: r.email || "",
-    })))} className="label-tag text-lab-700 underline dark:text-lab-500">
-      Excel
-    </button>
-    <button type="button" onClick={() => exportToPDF(`mutmlsa-rsvps-${ev.title}`, `RSVPs — ${ev.title}`, eventRsvps.map((r) => ({
-      Name: r.name, Email: r.email || "",
-    })))} className="label-tag text-lab-700 underline dark:text-lab-500">
-      PDF
-    </button>
-  </div>
-</div>
-                          
+                            <button
+                              type="button"
+                              onClick={() =>
+                                exportToCSV(
+                                  `mutmlsa-rsvps-${ev.title}`,
+                                  eventRsvps.map((r) => ({ Name: r.name, Email: r.email || "" }))
+                                )
+                              }
+                              className="label-tag text-lab-700 underline dark:text-lab-500"
+                            >
+                              CSV
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                exportToExcel(
+                                  `mutmlsa-rsvps-${ev.title}`,
+                                  eventRsvps.map((r) => ({ Name: r.name, Email: r.email || "" }))
+                                )
+                              }
+                              className="label-tag text-lab-700 underline dark:text-lab-500"
+                            >
+                              Excel
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                exportToPDF(
+                                  `mutmlsa-rsvps-${ev.title}`,
+                                  `RSVPs — ${ev.title}`,
+                                  eventRsvps.map((r) => ({ Name: r.name, Email: r.email || "" }))
+                                )
+                              }
+                              className="label-tag text-lab-700 underline dark:text-lab-500"
+                            >
+                              PDF
+                            </button>
+                          </div>
                         </div>
                         <div className="mt-2 space-y-1">
                           {eventRsvps.map((r, i) => (
@@ -850,39 +849,35 @@ const TABS = [
         </motion.button>
       </motion.div>
 
-      <p className="mt-6 label-tag text-ink-soft dark:text-dark-ink-soft">
-        Drag a section by its handle to reorder — your layout, your call.
-      </p>
-
       <div className="mt-6 flex flex-wrap gap-2 border-b border-ink/10 pb-3 dark:border-dark-border">
-  {TABS.map((tab) => (
-    <button
-      key={tab.key}
-      type="button"
-      onClick={() => setActiveAdminTab(tab.key)}
-      className={`rounded-sm px-3 py-1.5 text-sm font-semibold transition-colors ${
-        activeAdminTab === tab.key
-          ? "bg-coral-500 text-paper"
-          : "text-ink-soft hover:bg-lab-100/60 dark:text-dark-ink-soft dark:hover:bg-dark-surface/60"
-      }`}
-    >
-      {tab.label}
-    </button>
-  ))}
-</div>
+        {TABS.map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => setActiveAdminTab(tab.key)}
+            className={`rounded-sm px-3 py-1.5 text-sm font-semibold transition-colors ${
+              activeAdminTab === tab.key
+                ? "bg-coral-500 text-paper"
+                : "text-ink-soft hover:bg-lab-100/60 dark:text-dark-ink-soft dark:hover:bg-dark-surface/60"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
-<AnimatePresence mode="wait">
-  <motion.div
-    key={activeAdminTab}
-    initial={{ opacity: 0, y: 8 }}
-    animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0, y: -8 }}
-    transition={{ duration: 0.2 }}
-    className="mt-4 rounded-sm border border-ink/10 bg-paper p-5 dark:border-dark-border dark:bg-dark-bg"
-  >
-    {sections[activeAdminTab]}
-  </motion.div>
-</AnimatePresence>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeAdminTab}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.2 }}
+          className="mt-4 rounded-sm border border-ink/10 bg-paper p-5 dark:border-dark-border dark:bg-dark-bg"
+        >
+          {sections[activeAdminTab]}
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }
