@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { API_BASE_URL } from "../config/api";
+import { isValidRegNumber } from "../utils/regNumber";
 
 const initialForm = {
   fullName: "",
   email: "",
   yearOfStudy: "",
   phone: "",
+  registrationNumber: "",
   message: "",
 };
 
@@ -22,6 +24,13 @@ export default function JoinForm() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+
+    if (form.registrationNumber.trim() && !isValidRegNumber(form.registrationNumber)) {
+      setStatus("error");
+      setErrorMsg("Registration number looks off — expected something like MS200/2535/2023.");
+      return;
+    }
+
     setStatus("submitting");
     setErrorMsg("");
 
@@ -82,6 +91,14 @@ export default function JoinForm() {
         <YearSelect value={form.yearOfStudy} onChange={handleChange} />
         <Field label="Phone" name="phone" value={form.phone} onChange={handleChange} required />
       </div>
+      <Field
+        label="Registration number"
+        name="registrationNumber"
+        value={form.registrationNumber}
+        onChange={handleChange}
+        placeholder="e.g. MS200/2535/2023"
+        hint="Your university registration number, if you have one. Leave blank if you're joining as a friend of MUTMLSA."
+      />
       <div>
         <label className="label-tag mb-1.5 block text-paper/70" htmlFor="message">
           Message (optional)
@@ -112,7 +129,7 @@ export default function JoinForm() {
   );
 }
 
-function Field({ label, name, type = "text", value, onChange, required, placeholder }) {
+function Field({ label, name, type = "text", value, onChange, required, placeholder, hint }) {
   return (
     <div>
       <label className="label-tag mb-1.5 block text-paper/70" htmlFor={name}>
@@ -128,8 +145,7 @@ function Field({ label, name, type = "text", value, onChange, required, placehol
         placeholder={placeholder}
         className="w-full rounded-sm border border-paper/20 bg-paper/5 px-3 py-2 text-sm text-paper placeholder:text-paper/30 focus:border-lab-500 focus:outline-none"
       />
-
-   
+      {hint && <p className="mt-1 text-xs text-paper/50">{hint}</p>}
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { API_BASE_URL } from "../config/api";
 import { exportToCSV, exportToExcel, exportToPDF } from "../utils/exportData";
+import { isValidRegNumber } from "../utils/regNumber";
 
 const CURRENT_PERIOD = { academicYear: "2026/2027", semester: "Sem 1" };
 const YEAR_ORDER = ["Y1", "Y2", "Y3", "Y4"];
@@ -281,6 +282,20 @@ return res;
     loadData(true);
   }
 
+  async function saveRegNumber(memberId, value) {
+  const res = await authedFetch(`/api/admin/members/${memberId}/registration-number`, {
+    method: "PATCH",
+    body: JSON.stringify({ registrationNumber: value }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    alert(data.error || "Could not save.");
+    return;
+  }
+  flash(memberId);
+  loadData(true);
+}
+
   async function sendNotification(e) {
     e.preventDefault();
     if (!notifyTitle.trim() || !notifyBody.trim()) return;
@@ -487,6 +502,7 @@ return res;
                     flashId={flashId}
                     onToggleRegistration={toggleRegistration}
                     onTogglePayment={togglePayment}
+                    onSaveRegNumber={saveRegNumber}
                   />
                 ) : null
               )}
@@ -497,6 +513,7 @@ return res;
                   flashId={flashId}
                   onToggleRegistration={toggleRegistration}
                   onTogglePayment={togglePayment}
+                  onSaveRegNumber={saveRegNumber}
                 />
               )}
             </>
@@ -887,7 +904,43 @@ return res;
   );
 }
 
-function MemberYearGroup({ label, members, flashId, onToggleRegistration, onTogglePayment }) {
+function RegNumberEditor({ member, onSave }) {
+  const [value, setValue] = useState(member.registration_number || "");
+  const [saving, setSaving] = useState(false);
+
+  const unchanged = value.trim().toUpperCase() === (member.registration_number || "");
+  const invalid = value.trim() !== "" && !isValidRegNumber(value);
+
+  async function handleSave() {
+    setSaving(true);
+    await onSave(member.id, value);
+    setSaving(false);
+  }
+
+  return (
+    <div className="mt-2 flex items-center gap-2">
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        placeholder="Reg. no. e.g. MS200/2535/2023"
+        className={`w-56 rounded-sm border bg-transparent px-2 py-1 text-xs dark:text-dark-ink ${
+          invalid ? "border-coral-500" : "border-ink/15 dark:border-dark-border"
+        }`}
+      />
+      <button
+        type="button"
+        onClick={handleSave}
+        disabled={saving || unchanged || invalid}
+        className="label-tag rounded-sm border border-lab-700 px-2 py-1 text-lab-700 disabled:opacity-40 dark:border-lab-500 dark:text-lab-500"
+      >
+        {saving ? "…" : "Save"}
+      </button>
+    </div>
+  );
+}
+
+function MemberYearGroup({ label, members, flashId, onToggleRegistration, onTogglePayment, onSaveRegNumber }) {
   return (
     <div>
       <h3 className="label-tag mb-2 text-lab-700 dark:text-lab-500">
@@ -915,6 +968,7 @@ function MemberYearGroup({ label, members, flashId, onToggleRegistration, onTogg
                     </>
                   )}
                 </p>
+                <RegNumberEditor member={m} onSave={onSaveRegNumber} />
               </div>
               <div className="flex gap-2">
                 <motion.button
