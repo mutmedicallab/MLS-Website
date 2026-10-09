@@ -296,6 +296,19 @@ return res;
   loadData(true);
 }
 
+async function saveApplicationRegNumber(applicationId, value) {
+  const res = await authedFetch(`/api/admin/members/applications/${applicationId}/registration-number`, {
+    method: "PATCH",
+    body: JSON.stringify({ registrationNumber: value }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    alert(data.error || "Could not save.");
+    return;
+  }
+  loadData(true);
+}
+
   async function sendNotification(e) {
     e.preventDefault();
     if (!notifyTitle.trim() || !notifyBody.trim()) return;
@@ -446,6 +459,7 @@ return res;
                           )}
                           
                         </p>
+                        <RegNumberEditor member={app} onSave={saveApplicationRegNumber} />
                       </div>
                       <motion.button
                         whileTap={{ scale: 0.95 }}
