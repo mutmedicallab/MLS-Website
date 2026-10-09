@@ -27,7 +27,7 @@ export default function JoinForm() {
 
     if (form.registrationNumber.trim() && !isValidRegNumber(form.registrationNumber)) {
       setStatus("error");
-      setErrorMsg("Registration number looks off — expected something like MS200/2535/2023.");
+      setErrorMsg("Registration number looks off — expected something like MS200/****/20**.");
       return;
     }
 
@@ -96,7 +96,7 @@ export default function JoinForm() {
         name="registrationNumber"
         value={form.registrationNumber}
         onChange={handleChange}
-        placeholder="e.g. MS200/2535/2023"
+        placeholder="e.g. MS200/****/20**"
         hint="Your university registration number, if you have one. Leave blank if you're joining as a friend of MUTMLSA."
       />
       <div>
