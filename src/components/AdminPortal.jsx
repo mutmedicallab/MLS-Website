@@ -408,6 +408,7 @@ async function saveApplicationRegNumber(applicationId, value) {
     Phone: m.phone || "",
     "Registration Paid": m.registration_paid ? "Yes" : "No",
     "Semester Paid": m.paidThisPeriod ? "Yes" : "No",
+    "Registration No.": m.registration_number || "",
   }));
 
   const subscriberRows = filteredSubscribers.map((s) => ({
