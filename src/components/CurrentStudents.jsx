@@ -6,8 +6,8 @@ import Reveal from "./Reveal";
 import Pic1 from "../assets/currentStudents/Y1/01.jpeg";
 
 //Year 2
-import Pic1 from "../assets/currentStudents/Y3/01.jpeg";
-import Pic2 from "../assets/currentStudents/Y3/02.jpeg";
+import Pic3 from "../assets/currentStudents/Y3/01.jpeg";
+import Pic4 from "../assets/currentStudents/Y3/02.jpeg";
 // Each year holds several "entries" — a mix of formal group photos and
 // casual candid shots, since content keeps accumulating for the same
 // cohort as they move through the program.
@@ -34,7 +34,7 @@ const CURRENT_STUDENTS = [
     yearName: "Year 3",
     type: "slideshow",
     entries: [
-      { caption: "Y3 Cohort", tagline: "", photos: [Pic1,Pic2] },
+      { caption: "Y3 Cohort", tagline: "", photos: [Pic3,Pic4] },
     ],
   },
   {
