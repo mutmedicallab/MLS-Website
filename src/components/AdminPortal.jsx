@@ -923,7 +923,7 @@ function RegNumberEditor({ member, onSave }) {
         type="text"
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        placeholder="Reg. no. e.g. MS200/2535/2023"
+        placeholder="Reg. no. e.g. MS200/****/20**"
         className={`w-56 rounded-sm border bg-transparent px-2 py-1 text-xs dark:text-dark-ink ${
           invalid ? "border-coral-500" : "border-ink/15 dark:border-dark-border"
         }`}
