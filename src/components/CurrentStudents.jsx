@@ -53,6 +53,7 @@ const CURRENT_STUDENTS = [
   {
     yearLabel: "Y4",
     yearName: "Year 4",
+    type: "slideshow",
     entries: [
       { caption: "Y4 Cohort", tagline: "Years of training, one big graduation", photos: [Pic11, Pic12, Pic13, Pic14, Pic15, Pic16, Pic17, Pic18, Pic19, Pic20, Pic21, Pic22] },
     ],
