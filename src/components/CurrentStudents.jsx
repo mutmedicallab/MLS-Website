@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import Reveal from "./Reveal";
+import Slideshow from "./Slideshow";
 
 //Year 1 pictures
 import Pic1 from "../assets/currentStudents/Y1/01.jpeg";
@@ -9,8 +10,9 @@ import Pic1 from "../assets/currentStudents/Y1/01.jpeg";
 import Pic3 from "../assets/currentStudents/Y3/01.jpeg";
 import Pic4 from "../assets/currentStudents/Y3/02.jpeg";
 
-// Each year holds several "entries". Add `type: "slideshow"` to a year to
-// show its photos as an auto-advancing slideshow instead of a single tile.
+// Add `type: "slideshow"` to a year to show its photos as a slideshow.
+// Photos can be plain imports, or { src, label } objects if you want a
+// caption (like a student's name) to show over each photo.
 const CURRENT_STUDENTS = [
   {
     yearLabel: "Y1",
@@ -23,7 +25,7 @@ const CURRENT_STUDENTS = [
     yearLabel: "Y2",
     yearName: "Year 2",
     entries: [
-      { caption: "Y2 Cohort", tagline: "", photos: [] },
+      { caption: "Y2 Cohort", tagline: "Settled in, stepping up", photos: [] },
     ],
   },
   {
@@ -31,22 +33,23 @@ const CURRENT_STUDENTS = [
     yearName: "Year 3",
     type: "slideshow",
     entries: [
-      { caption: "Y3 Cohort", tagline: "", photos: [Pic3, Pic4] },
+      { caption: "Y3 Cohort", tagline: "Past the halfway mark and not slowing down", photos: [Pic3, Pic4] },
     ],
   },
   {
     yearLabel: "Y4",
     yearName: "Year 4",
     entries: [
-      { caption: "Y4 Cohort", tagline: "", photos: [] },
+      { caption: "Y4 Cohort", tagline: "Years of training, one big graduation", photos: [] },
     ],
   },
 ];
 
-const SLIDE_INTERVAL_MS = 4000;
-
 export default function CurrentStudents() {
-  const [selectedYear, setSelectedYear] = useState(0);
+  const [selectedYear, setSelectedYear] = useState(() => {
+  const match = window.location.hash.match(/^#students-y([1-4])$/);
+  return match ? Number(match[1]) - 1 : 0;
+});
   const [openEntry, setOpenEntry] = useState(null);
   const year = CURRENT_STUDENTS[selectedYear];
   const isSlideshowYear = year.type === "slideshow";
@@ -84,20 +87,15 @@ export default function CurrentStudents() {
         </div>
 
         {year.entries.length > 0 ? (
-          <div
-            className={
-              isSlideshowYear
-                ? "mt-8 grid max-w-2xl gap-4"
-                : "mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
-            }
-          >
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {year.entries.map((e, i) => (
               <Reveal key={e.caption} delay={i * 0.08}>
-                {isSlideshowYear && e.photos.length > 1 ? (
-                  <SlideshowTile entry={e} onOpen={() => setOpenEntry(i)} />
-                ) : (
-                  <EntryTile entry={e} onOpen={() => setOpenEntry(i)} />
-                )}
+                <EntryTile
+                  entry={e}
+                  seed={i}
+                  isSlideshow={isSlideshowYear}
+                  onOpen={() => setOpenEntry(i)}
+                />
               </Reveal>
             ))}
           </div>
@@ -114,6 +112,7 @@ export default function CurrentStudents() {
         {openEntry !== null && (
           <EntryLightbox
             entry={year.entries[openEntry]}
+            isSlideshow={isSlideshowYear}
             onClose={() => setOpenEntry(null)}
           />
         )}
@@ -122,113 +121,9 @@ export default function CurrentStudents() {
   );
 }
 
-function SlideshowTile({ entry, onOpen }) {
-  const [index, setIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
-  const touchStartX = useRef(null);
-  const count = entry.photos.length;
-
-  useEffect(() => {
-    if (paused || count < 2) return;
-    const timer = setInterval(() => setIndex((i) => (i + 1) % count), SLIDE_INTERVAL_MS);
-    return () => clearInterval(timer);
-  }, [paused, count]);
-
-  function go(delta) {
-    setIndex((i) => (i + delta + count) % count);
-  }
-
-  function handleTouchEnd(e) {
-    if (touchStartX.current === null) return;
-    const diff = e.changedTouches[0].clientX - touchStartX.current;
-    if (Math.abs(diff) > 40) go(diff < 0 ? 1 : -1);
-    touchStartX.current = null;
-    setPaused(false);
-  }
-
-  return (
-    <div className="overflow-hidden rounded-sm border border-ink/10 dark:border-dark-border">
-      <div
-        className="relative aspect-[4/3] cursor-pointer bg-lab-900"
-        onClick={onOpen}
-        onMouseEnter={() => setPaused(true)}
-        onMouseLeave={() => setPaused(false)}
-        onTouchStart={(e) => {
-          touchStartX.current = e.touches[0].clientX;
-          setPaused(true);
-        }}
-        onTouchEnd={handleTouchEnd}
-      >
-        <AnimatePresence mode="wait">
-          <motion.img
-            key={index}
-            src={entry.photos[index]}
-            alt={`${entry.caption} ${index + 1}`}
-            className="absolute inset-0 h-full w-full object-cover"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.4 }}
-          />
-        </AnimatePresence>
-
-        <button
-          type="button"
-          aria-label="Previous photo"
-          onClick={(e) => {
-            e.stopPropagation();
-            go(-1);
-          }}
-          className="absolute left-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-paper/80 text-lab-900"
-        >
-          ‹
-        </button>
-        <button
-          type="button"
-          aria-label="Next photo"
-          onClick={(e) => {
-            e.stopPropagation();
-            go(1);
-          }}
-          className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-paper/80 text-lab-900"
-        >
-          ›
-        </button>
-
-        <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
-          {entry.photos.map((_, i) => (
-            <button
-              key={i}
-              type="button"
-              aria-label={`Go to photo ${i + 1}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                setIndex(i);
-              }}
-              className={`h-1.5 rounded-full transition-all ${
-                i === index ? "w-5 bg-paper" : "w-1.5 bg-paper/50"
-              }`}
-            />
-          ))}
-        </div>
-      </div>
-
-      <div className="bg-lab-50/50 p-4 dark:bg-dark-surface/40">
-        <p className="font-display text-sm font-semibold text-lab-900 dark:text-dark-ink">
-          {entry.caption}
-        </p>
-        {entry.tagline && (
-          <p className="mt-1 text-xs italic text-ink-soft dark:text-dark-ink-soft">
-            {entry.tagline}
-          </p>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function EntryTile({ entry, onOpen }) {
+function EntryTile({ entry, seed, isSlideshow, onOpen }) {
   const hasPhotos = entry.photos.length > 0;
+  const showSlideshow = isSlideshow && entry.photos.length > 1;
 
   return (
     <div
@@ -242,9 +137,17 @@ function EntryTile({ entry, onOpen }) {
         hasPhotos ? "cursor-pointer transition-transform hover:-translate-y-0.5" : ""
       }`}
     >
-      <div className="flex aspect-[4/3] items-center justify-center bg-lab-900">
+      <div className="relative flex aspect-[4/3] items-center justify-center bg-lab-900">
         {hasPhotos ? (
-          <img src={entry.photos[0]} alt={entry.caption} className="h-full w-full object-cover" />
+          showSlideshow ? (
+            <Slideshow photos={entry.photos} seed={seed} interactive={false} />
+          ) : (
+            <img
+              src={typeof entry.photos[0] === "string" ? entry.photos[0] : entry.photos[0].src}
+              alt={entry.caption}
+              className="h-full w-full object-cover"
+            />
+          )
         ) : (
           <span className="label-tag text-lab-500/60">Photo coming soon</span>
         )}
@@ -263,7 +166,21 @@ function EntryTile({ entry, onOpen }) {
   );
 }
 
-function EntryLightbox({ entry, onClose }) {
+function EntryLightbox({ entry, isSlideshow, onClose }) {
+  useEffect(() => {
+    function handleKey(e) {
+      if (e.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", handleKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", handleKey);
+      document.body.style.overflow = "";
+    };
+  }, [onClose]);
+
+  const showSlideshow = isSlideshow && entry.photos.length > 1;
+
   return (
     <motion.div
       className="fixed inset-0 z-[100] flex items-center justify-center bg-lab-900/90 p-5 backdrop-blur-sm"
@@ -288,11 +205,24 @@ function EntryLightbox({ entry, onClose }) {
         >
           ✕
         </button>
-        <div className="max-h-[75vh] w-full space-y-2 overflow-y-auto bg-lab-900 p-2">
-          {entry.photos.map((src, i) => (
-            <img key={i} src={src} alt={`${entry.caption} ${i + 1}`} className="w-full rounded-sm object-contain" />
-          ))}
+
+        <div className="max-h-[75vh] w-full overflow-y-auto bg-lab-900">
+          {showSlideshow ? (
+            <Slideshow photos={entry.photos} seed={0} interactive natural />
+          ) : (
+            <div className="space-y-2 p-2">
+              {entry.photos.map((p, i) => (
+                <img
+                  key={i}
+                  src={typeof p === "string" ? p : p.src}
+                  alt={`${entry.caption} ${i + 1}`}
+                  className="w-full rounded-sm object-contain"
+                />
+              ))}
+            </div>
+          )}
         </div>
+
         <div className="p-5">
           <p className="font-display text-lg font-semibold text-paper">{entry.caption}</p>
           {entry.tagline && (

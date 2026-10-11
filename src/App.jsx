@@ -36,6 +36,11 @@ const HASH_TO_TAB = {
   "#archive": "archive",
   "#moments": "archive",
   "#alumni": "archive",
+  "#students": "archive",
+  "#students-y1": "archive",
+  "#students-y2": "archive",
+  "#students-y3": "archive",
+  "#students-y4": "archive",
 };
 
 export default function App() {
