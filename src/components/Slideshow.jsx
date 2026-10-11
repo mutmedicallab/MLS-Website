@@ -37,7 +37,7 @@ export default function Slideshow({ photos, seed = 0, interactive = false, natur
               : { position: "absolute", inset: 0 }
           }
           animate={{ opacity: i === index ? 1 : 0 }}
-          transition={{ duration: 0.6, ease: "easeInOut" }}
+          transition={{ duration: 0.11, ease: "easeInOut" }}
         >
           {natural ? (
             <ZoomableImage
