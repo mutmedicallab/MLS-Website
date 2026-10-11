@@ -245,9 +245,20 @@ const MOMENTS_BY_PERIOD = [
   },
 ];
 
+function findGameNight() {
+  for (let p = 0; p < MOMENTS_BY_PERIOD.length; p++) {
+    const e = MOMENTS_BY_PERIOD[p].events.findIndex(
+      (m) => m.caption === "Game Night" && m.type === "video"
+    );
+    if (e !== -1) return { period: p, event: e };
+  }
+  return null;
+}
+
 export default function Moments() {
-  const [selectedPeriod, setSelectedPeriod] = useState(0);
-  const [openIndex, setOpenIndex] = useState(null);
+  const gameNight = window.location.hash === "#game-night" ? findGameNight() : null;
+  const [selectedPeriod, setSelectedPeriod] = useState(gameNight ? gameNight.period : 0);
+  const [openIndex, setOpenIndex] = useState(gameNight ? gameNight.event : null);
   const period = MOMENTS_BY_PERIOD[selectedPeriod];
 
   return (

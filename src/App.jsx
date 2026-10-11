@@ -41,6 +41,7 @@ const HASH_TO_TAB = {
   "#students-y2": "archive",
   "#students-y3": "archive",
   "#students-y4": "archive",
+  "#game-night": "archive",
 };
 
 export default function App() {
@@ -51,9 +52,12 @@ export default function App() {
 
   useEffect(() => {
   if (window.location.hash) {
-    const targetHash = window.location.hash.startsWith("#students")
+    const hash = window.location.hash;
+    const targetHash = hash.startsWith("#students")
       ? "#students"
-      : window.location.hash;
+      : hash === "#game-night"
+      ? "#moments"
+      : hash;
     const el = document.querySelector(targetHash);
     if (el) {
       setTimeout(() => el.scrollIntoView({ behavior: "smooth" }), 150);
