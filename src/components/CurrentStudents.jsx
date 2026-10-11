@@ -21,8 +21,8 @@ import Pic17 from "../assets/currentStudents/Y4/07.jpeg";
 import Pic18 from "../assets/currentStudents/Y4/08.jpeg";
 import Pic19 from "../assets/currentStudents/Y4/09.jpeg";
 import Pic20 from "../assets/currentStudents/Y4/010.jpeg";
-import Pic21 from "../assets/currentStudents/Y4/11.jpeg";
-import Pic22 from "../assets/currentStudents/Y4/12.jpeg";
+import Pic21 from "../assets/currentStudents/Y4/011.jpeg";
+import Pic22 from "../assets/currentStudents/Y4/012.jpeg";
 
 // Add `type: "slideshow"` to a year to show its photos as a slideshow.
 // Photos can be plain imports, or { src, label } objects if you want a
