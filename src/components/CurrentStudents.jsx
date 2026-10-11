@@ -7,8 +7,22 @@ import Slideshow from "./Slideshow";
 import Pic1 from "../assets/currentStudents/Y1/01.jpeg";
 
 //Year 3
-import Pic3 from "../assets/currentStudents/Y3/01.jpeg";
-import Pic4 from "../assets/currentStudents/Y3/02.jpeg";
+import Pic6 from "../assets/currentStudents/Y3/01.jpeg";
+import Pic7 from "../assets/currentStudents/Y3/02.jpeg";
+
+//Year 4
+import Pic11 from "../assets/currentStudents/Y4/01.jpeg";
+import Pic12 from "../assets/currentStudents/Y4/02.jpeg";
+import Pic13 from "../assets/currentStudents/Y4/03.jpeg";
+import Pic14 from "../assets/currentStudents/Y4/04.jpeg";
+import Pic15 from "../assets/currentStudents/Y4/05.jpeg";
+import Pic16 from "../assets/currentStudents/Y4/06.jpeg";
+import Pic17 from "../assets/currentStudents/Y4/07.jpeg";
+import Pic18 from "../assets/currentStudents/Y4/08.jpeg";
+import Pic19 from "../assets/currentStudents/Y4/09.jpeg";
+import Pic20 from "../assets/currentStudents/Y4/10.jpeg";
+import Pic21 from "../assets/currentStudents/Y4/11.jpeg";
+import Pic22 from "../assets/currentStudents/Y4/12.jpeg";
 
 // Add `type: "slideshow"` to a year to show its photos as a slideshow.
 // Photos can be plain imports, or { src, label } objects if you want a
@@ -33,14 +47,14 @@ const CURRENT_STUDENTS = [
     yearName: "Year 3",
     type: "slideshow",
     entries: [
-      { caption: "Y3 Cohort", tagline: "Past the halfway mark and not slowing down", photos: [Pic3, Pic4] },
+      { caption: "Y3 Cohort", tagline: "Past the halfway mark and not slowing down", photos: [Pic6, Pic7] },
     ],
   },
   {
     yearLabel: "Y4",
     yearName: "Year 4",
     entries: [
-      { caption: "Y4 Cohort", tagline: "Years of training, one big graduation", photos: [] },
+      { caption: "Y4 Cohort", tagline: "Years of training, one big graduation", photos: [Pic11, Pic12, Pic13, Pic14, Pic15, Pic16, Pic17, Pic18, Pic19, Pic20, Pic21, Pic22] },
     ],
   },
 ];
