@@ -1,19 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import Reveal from "./Reveal";
 
 //Year 1 pictures
 import Pic1 from "../assets/currentStudents/Y1/01.jpeg";
 
-//Year 2
+//Year 3
 import Pic3 from "../assets/currentStudents/Y3/01.jpeg";
 import Pic4 from "../assets/currentStudents/Y3/02.jpeg";
-// Each year holds several "entries" — a mix of formal group photos and
-// casual candid shots, since content keeps accumulating for the same
-// cohort as they move through the program.
-//
-// Add real imports as photos come in, e.g.:
-//   import y1Group1 from "../assets/current-students/y1/group-01.jpeg";
+
+// Each year holds several "entries". Add `type: "slideshow"` to a year to
+// show its photos as an auto-advancing slideshow instead of a single tile.
 const CURRENT_STUDENTS = [
   {
     yearLabel: "Y1",
@@ -34,7 +31,7 @@ const CURRENT_STUDENTS = [
     yearName: "Year 3",
     type: "slideshow",
     entries: [
-      { caption: "Y3 Cohort", tagline: "", photos: [Pic3,Pic4] },
+      { caption: "Y3 Cohort", tagline: "", photos: [Pic3, Pic4] },
     ],
   },
   {
@@ -46,10 +43,13 @@ const CURRENT_STUDENTS = [
   },
 ];
 
+const SLIDE_INTERVAL_MS = 4000;
+
 export default function CurrentStudents() {
   const [selectedYear, setSelectedYear] = useState(0);
   const [openEntry, setOpenEntry] = useState(null);
   const year = CURRENT_STUDENTS[selectedYear];
+  const isSlideshowYear = year.type === "slideshow";
 
   return (
     <section id="students" className="border-t border-ink/10 py-20 dark:border-dark-border md:py-28">
@@ -84,10 +84,20 @@ export default function CurrentStudents() {
         </div>
 
         {year.entries.length > 0 ? (
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div
+            className={
+              isSlideshowYear
+                ? "mt-8 grid max-w-2xl gap-4"
+                : "mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+            }
+          >
             {year.entries.map((e, i) => (
               <Reveal key={e.caption} delay={i * 0.08}>
-                <EntryTile entry={e} onOpen={() => setOpenEntry(i)} />
+                {isSlideshowYear && e.photos.length > 1 ? (
+                  <SlideshowTile entry={e} onOpen={() => setOpenEntry(i)} />
+                ) : (
+                  <EntryTile entry={e} onOpen={() => setOpenEntry(i)} />
+                )}
               </Reveal>
             ))}
           </div>
@@ -109,6 +119,111 @@ export default function CurrentStudents() {
         )}
       </AnimatePresence>
     </section>
+  );
+}
+
+function SlideshowTile({ entry, onOpen }) {
+  const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const touchStartX = useRef(null);
+  const count = entry.photos.length;
+
+  useEffect(() => {
+    if (paused || count < 2) return;
+    const timer = setInterval(() => setIndex((i) => (i + 1) % count), SLIDE_INTERVAL_MS);
+    return () => clearInterval(timer);
+  }, [paused, count]);
+
+  function go(delta) {
+    setIndex((i) => (i + delta + count) % count);
+  }
+
+  function handleTouchEnd(e) {
+    if (touchStartX.current === null) return;
+    const diff = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(diff) > 40) go(diff < 0 ? 1 : -1);
+    touchStartX.current = null;
+    setPaused(false);
+  }
+
+  return (
+    <div className="overflow-hidden rounded-sm border border-ink/10 dark:border-dark-border">
+      <div
+        className="relative aspect-[4/3] cursor-pointer bg-lab-900"
+        onClick={onOpen}
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => setPaused(false)}
+        onTouchStart={(e) => {
+          touchStartX.current = e.touches[0].clientX;
+          setPaused(true);
+        }}
+        onTouchEnd={handleTouchEnd}
+      >
+        <AnimatePresence mode="wait">
+          <motion.img
+            key={index}
+            src={entry.photos[index]}
+            alt={`${entry.caption} ${index + 1}`}
+            className="absolute inset-0 h-full w-full object-cover"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4 }}
+          />
+        </AnimatePresence>
+
+        <button
+          type="button"
+          aria-label="Previous photo"
+          onClick={(e) => {
+            e.stopPropagation();
+            go(-1);
+          }}
+          className="absolute left-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-paper/80 text-lab-900"
+        >
+          ‹
+        </button>
+        <button
+          type="button"
+          aria-label="Next photo"
+          onClick={(e) => {
+            e.stopPropagation();
+            go(1);
+          }}
+          className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-paper/80 text-lab-900"
+        >
+          ›
+        </button>
+
+        <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
+          {entry.photos.map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              aria-label={`Go to photo ${i + 1}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIndex(i);
+              }}
+              className={`h-1.5 rounded-full transition-all ${
+                i === index ? "w-5 bg-paper" : "w-1.5 bg-paper/50"
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className="bg-lab-50/50 p-4 dark:bg-dark-surface/40">
+        <p className="font-display text-sm font-semibold text-lab-900 dark:text-dark-ink">
+          {entry.caption}
+        </p>
+        {entry.tagline && (
+          <p className="mt-1 text-xs italic text-ink-soft dark:text-dark-ink-soft">
+            {entry.tagline}
+          </p>
+        )}
+      </div>
+    </div>
   );
 }
 
