@@ -50,16 +50,16 @@ export default function App() {
   });
 
   useEffect(() => {
-    if (window.location.hash) {
-      const el = document.querySelector(window.location.hash);
-      if (el) {
-        // Wait for the active tab's content to actually mount before
-        // scrolling, since the target section may not exist in the DOM
-        // until activeTab switches to the tab it lives in.
-        setTimeout(() => el.scrollIntoView({ behavior: "smooth" }), 150);
-      }
+  if (window.location.hash) {
+    const targetHash = window.location.hash.startsWith("#students")
+      ? "#students"
+      : window.location.hash;
+    const el = document.querySelector(targetHash);
+    if (el) {
+      setTimeout(() => el.scrollIntoView({ behavior: "smooth" }), 150);
     }
-  }, [activeTab]);
+  }
+}, [activeTab]);
 
   if (window.location.pathname === "/admin") {
     return <AdminPortal />;
