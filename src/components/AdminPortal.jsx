@@ -96,7 +96,7 @@ function Tile({ children, flash, className = "", ...props }) {
 function ExportButtons({ onCSV, onExcel, onPDF }) {
   const cls = "label-tag rounded-sm border border-ink/15 px-3 py-1.5 dark:border-dark-border";
   return (
-    <div className="mt-3 flex gap-2">
+    <div className="mt-3 flex flex-wrap gap-2">
       <button type="button" onClick={onCSV} className={cls}>Export CSV</button>
       <button type="button" onClick={onExcel} className={cls}>Export Excel</button>
       <button type="button" onClick={onPDF} className={cls}>Export PDF</button>
@@ -440,9 +440,9 @@ async function saveApplicationRegNumber(applicationId, value) {
               <AnimatePresence>
                 {applications.map((app) => (
                   <Tile key={app.id}>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-semibold text-lab-900 dark:text-dark-ink">{app.full_name}</p>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+  <div className="min-w-0 break-words">
+    <p className="text-sm font-semibold text-lab-900 dark:text-dark-ink">{app.full_name}</p>
                         <p className="text-xs text-ink-soft dark:text-dark-ink-soft">
                           {app.email} · {app.year_of_study || "Year unknown"}
                           {app.phone && (
@@ -467,7 +467,7 @@ async function saveApplicationRegNumber(applicationId, value) {
                         type="button"
                         onClick={() => confirmApplication(app)}
                         disabled={confirmingId === app.id}
-                        className="rounded-sm bg-lab-800 px-3 py-1.5 text-xs font-semibold text-paper disabled:opacity-50"
+                        className="w-full rounded-sm bg-lab-800 px-3 py-1.5 text-xs font-semibold text-paper disabled:opacity-50 sm:w-auto"
                       >
                         {confirmingId === app.id ? "Confirming…" : "Confirm as member"}
                       </motion.button>
@@ -695,7 +695,7 @@ async function saveApplicationRegNumber(applicationId, value) {
           ) : (
             events.map((ev) => (
               <Tile key={ev.id}>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="text-sm font-semibold text-lab-900 dark:text-dark-ink">{ev.title}</p>
                     <p className="text-xs text-ink-soft dark:text-dark-ink-soft">
@@ -933,13 +933,13 @@ function RegNumberEditor({ member, onSave }) {
   }
 
   return (
-    <div className="mt-2 flex items-center gap-2">
+    <div className="mt-2 flex flex-wrap items-center gap-2">
       <input
         type="text"
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder="Reg. no. e.g. MS200/****/20**"
-        className={`w-56 rounded-sm border bg-transparent px-2 py-1 text-xs dark:text-dark-ink ${
+        className={`w-full max-w-xs rounded-sm border bg-transparent px-2 py-1 text-xs sm:w-56 dark:text-dark-ink ${
           invalid ? "border-coral-500" : "border-ink/15 dark:border-dark-border"
         }`}
       />
@@ -985,7 +985,7 @@ function MemberYearGroup({ label, members, flashId, onToggleRegistration, onTogg
                 </p>
                 <RegNumberEditor member={m} onSave={onSaveRegNumber} />
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <motion.button
                   whileTap={{ scale: 0.95 }}
                   type="button"
