@@ -2,45 +2,196 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import confetti from "canvas-confetti";
 import { API_BASE_URL } from "../config/api";
+import { getCurrentWeekId, getWeekLabel } from "../utils/periodId";
 import NotifyOptIn from "./Notifyoptin";
 
 const POINTS_PER_SQUARE = 10;
 const HEADER_LETTERS = ["B", "I", "N", "G", "O"];
+const CARD_KEY = "mutmlsa_bingo_card_id";
+const NAME_KEY = "mutmlsa_bingo_last_name";
 
-const SQUARES = [
-  "Attended this week's Thursday meeting",
-  "Talked to someone from a different year this week",
-  "Visited the Moments section this week",
-  "Met a committee member this week",
-  "Attended last semester's Game Night",
-  "Asked the chatbot a question this week",
-  "Share the website with a classmate this week",
-  "Read the MUTMLSA constitution highlights",
-  "Visited the Alumni gallery",
-  "Subscribed to the newsletter",
-  "Followed @mut_mlsa on Instagram",
-  "Attended a screening camp / outreach event this year",
-  "FREE SPACE",
-  "Learned one thing about Microbiology this week",
-  "Taken a photo at a MUTMLSA event this year",
-  "Knows how to play a musical instrument",
-  "Knows someone who can crotchet or knit",
-  "Met a Y4 student",
-  "Find someone who knows the Father of Genetics",
-  "Knows someone in MUT who has travelled abroad this year",
-  "Knows someone who has a pet at home",
+// ---------------------------------------------------------------------------
+// SQUARE POOL — the board for each week is drawn from this list automatically.
+// 24 squares per board. With this many squares you get several full weeks with
+// no repeated square, then the order is reshuffled and it starts a fresh cycle.
+// Keep every square evergreen (nothing tied to one specific event or date).
+// ---------------------------------------------------------------------------
+const SQUARE_POOL = [
+  "Find a MUTMLSA committee member",
+  "Find someone who has asked the MUTMLSA chatbot a question",
+  "Find someone who has opened the Moments section",
+  "Find someone who follows @mut_mlsa on Instagram",
+  "Find someone subscribed to the MUTMLSA newsletter",
+  "Find someone who has RSVPed to a MUTMLSA event",
+  "Find someone who has played the Speed Round",
+  "Find someone who has taken the Lab Science Quiz",
+  "Find someone who has turned on MUTMLSA notifications",
+  "Find someone who attended a MUTMLSA meeting this semester",
+  "Find someone who has been to a screening camp or outreach",
+  "Find someone who has shared the site with a friend",
+  "Find someone who has visited the Archive tab",
+  "Find a first-year student",
+  "Find a second-year student",
+  "Find a third-year student",
+  "Find a fourth-year student",
+  "Find someone from a different year of study",
+  "Find someone studying a different programme at MUT",
+  "Find someone who has read the MUTMLSA constitution",
+  "Find someone who knows the MUTMLSA motto",
+  "Find someone who has volunteered at a health event",
+  "Find someone who has given a presentation this semester",
+  "Find someone who can name the tube colour used for an FBC",
+  "Find someone who has done a venipuncture on a real person",
+  "Find someone who can name three anticoagulants",
+  "Find someone who can spell Schistosoma haematobium",
+  "Find someone who has seen malaria parasites on a slide",
+  "Find someone who can outline the malaria life cycle",
+  "Find someone who can explain the Gram stain simply",
+  "Find someone who knows what a Howell-Jolly body is",
+  "Find someone who knows their own blood group",
+  "Find someone who has donated blood",
+  "Find someone who can recite the order of draw",
+  "Find someone who has used an autoclave",
+  "Find someone who has made a blood smear",
+  "Find someone who knows what QC stands for in a lab",
+  "Find someone who can name the stain used for TB",
+  "Find someone who can name a parasite found in stool",
+  "Find someone who can name a tumour marker",
+  "Find someone who knows a normal haemoglobin range",
+  "Find someone who has used a micropipette",
+  "Find someone who can name the five hepatitis viruses",
+  "Find someone who knows what ELISA stands for",
+  "Find someone who can name a Gram-negative bacterium",
+  "Find someone who knows what PCR stands for",
+  "Find someone who can name the vector of malaria",
+  "Find someone who has seen a Reed-Sternberg cell",
+  "Find someone who can name the three types of granulocytes",
+  "Find someone who can explain serum versus plasma",
+  "Find someone who can name a clotting factor",
+  "Find someone who knows what HbA1c measures",
+  "Find someone who can name a vector-borne disease",
+  "Find someone who has studied in the library this week",
+  "Find someone who can name a sexually transmitted infection",
+  "Find someone who has worked a bench practical this week",
+  "Find someone who can name a lab safety rule",
+  "Find someone who knows what a biohazard symbol looks like",
+  "Find someone who can name a type of anaemia",
+  "Find someone who knows what ALT and AST test for",
+  "Find someone who has handled a centrifuge",
+  "Find someone who can name a culture medium",
+  "Find someone who has used a haemocytometer",
+  "Find someone who can name a disease caused by a virus",
+  "Find someone who can name a fungal infection",
+  "Find someone who has read a journal article this month",
+  "Find someone who can name a cell organelle and its job",
+  "Find someone who can define test sensitivity",
+  "Find someone who has revised with a group this week",
+  "Find someone who plays a musical instrument",
+  "Find someone who can crochet or knit",
   "Find someone who can recite the Kenyan National Anthem",
-  "Watched the Game Night video in Moments",
-  "Learned one thing about Haematology this week",
-  "Recommended MUTMLSA to a friend this week",
+  "Find someone who has a pet at home",
+  "Find someone who has travelled abroad",
+  "Find someone who speaks three or more languages",
+  "Find someone who shares your birth month",
+  "Find someone who can cook chapati",
+  "Find someone who plays football or volleyball",
+  "Find someone who can juggle",
+  "Find someone who is left-handed",
+  "Find someone who can whistle a tune",
+  "Find someone whose favourite colour matches yours",
+  "Find someone who walked to campus this week",
+  "Find someone wearing something green this week",
+  "Find someone who wears glasses",
+  "Find someone who has a business or side hustle",
+  "Find someone who writes poetry",
+  "Find someone who can draw a cell from memory",
+  "Find someone who has climbed a mountain",
+  "Find someone who has been to the coast",
+  "Find someone who drinks tea without sugar",
+  "Find someone who can do a cartwheel",
+  "Find someone who knows who discovered penicillin",
+  "Find someone who knows the Father of Genetics",
+  "Find someone who knows who discovered blood groups",
+  "Find someone who can name the bacterium that causes TB",
+  "Find someone who has a birthday this month",
+  "Find someone who has been to a hospital lab visit",
+  "Find someone who has a sibling studying at MUT",
+  "Find someone who can sing a gospel song",
+  "Find someone who has never missed a lecture this week",
+  "Find someone who enjoys cooking",
+  "Find someone who owns a stethoscope",
+  "Find someone who prefers mornings to evenings",
+  "Find someone who has used a microscope this week",
+  "Find someone who can speak a language you cannot",
+  "Find someone who has met a lab technologist in the field",
+  "Find someone who has been on attachment or practicals",
+  "Find someone who can name a Kenyan public health programme",
+  "Find someone who has used the university library this week",
+  "Find someone who can touch their toes",
+  "Find someone who can name a famous scientist",
+  "Find someone who has read a book this month",
+  "Find someone who prefers tea over coffee",
+  "Find someone who has a lab coat with their name on it",
+  "Find someone who has helped a junior with notes",
+  "Find someone who can name a vaccine-preventable disease",
+  "Find someone who can name a bacterial STI",
+  "Find someone who knows what a titre is",
+  "Find someone who can name a common cause of a false result",
+  "Find someone who knows what sterilisation means",
+  "Find someone who has swabbed a bench with disinfectant",
+  "Find someone who can name a type of centrifuge tube",
+  "Find someone who has seen a sickle cell on a film",
+  "Find someone who has seen a trypanosome on a slide",
+  "Find someone who knows what Hb electrophoresis shows",
+  "Find someone who has ever stained a slide",
+  "Find someone who has read a package insert for a test kit",
+  "Find someone who has heard of Kato-Katz"
 ];
 
-const MAX_POINTS = SQUARES.length * POINTS_PER_SQUARE;
+const SQUARES_PER_BOARD = 24;
+const BOARDS_PER_CYCLE = Math.floor(SQUARE_POOL.length / SQUARES_PER_BOARD);
+
+// Small seeded random generator so everyone gets the SAME board in the same week.
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a += 0x6d2b79f5;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function seededShuffle(arr, seed) {
+  const copy = [...arr];
+  const rand = mulberry32(seed);
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+// Builds the 25-square board for a round id like "week-42".
+function buildBoard(roundId) {
+  const match = /^week-(-?\d+)$/.exec(roundId || "");
+  const weekNumber = match ? Number(match[1]) : 0;
+  const cycle = Math.floor(weekNumber / BOARDS_PER_CYCLE);
+  const slot = ((weekNumber % BOARDS_PER_CYCLE) + BOARDS_PER_CYCLE) % BOARDS_PER_CYCLE;
+
+  // A fresh shuffle every cycle, so the second run through is in a different order
+  const order = seededShuffle(SQUARE_POOL, 1000 + cycle);
+  const picked = order.slice(slot * SQUARES_PER_BOARD, (slot + 1) * SQUARES_PER_BOARD);
+
+  // Put the FREE SPACE in the middle (index 12)
+  return [...picked.slice(0, 12), "FREE SPACE", ...picked.slice(12)];
+}
 
 // Fires a confetti burst. Blackout gets a bigger, longer, two-sided burst;
 // Bingo gets a single centered pop.
 function fireConfetti(kind) {
-  const colors = ["#ef6351", "#1f3b33", "#f4ede0", "#a8c3b8"]; // coral / lab / paper / soft accents — swap for your real palette if different
+  const colors = ["#ef6351", "#1f3b33", "#f4ede0", "#a8c3b8"]; // coral / lab / paper / soft accents
 
   if (kind === "blackout") {
     const duration = 2200;
@@ -82,7 +233,13 @@ function fireConfetti(kind) {
 
 export default function Bingo() {
   const [card, setCard] = useState(null);
-  const [name, setName] = useState("");
+  const [name, setName] = useState(() => {
+    try {
+      return localStorage.getItem(NAME_KEY) || "";
+    } catch {
+      return "";
+    }
+  });
   const [searchName, setSearchName] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -95,15 +252,52 @@ export default function Bingo() {
   const [nameInput, setNameInput] = useState("");
   const [toast, setToast] = useState(null);
   const [showAllLeaderboard, setShowAllLeaderboard] = useState(false);
+  // The server decides which week it is, so a wrong phone clock can't show the wrong board.
+  const [roundId, setRoundId] = useState(() => getCurrentWeekId());
+
+  const SQUARES = buildBoard(roundId);
+  const MAX_POINTS = SQUARES.length * POINTS_PER_SQUARE;
+
+  // Called when a saved card belongs to a finished week
+  function retireOldCard(message) {
+    try {
+      localStorage.removeItem(CARD_KEY);
+    } catch {
+      /* ignore */
+    }
+    setCard(null);
+    setActiveSquare(null);
+    if (message) setToast(message);
+  }
 
   useEffect(() => {
-    const savedId = localStorage.getItem("mutmlsa_bingo_card_id");
+    let savedId = null;
+    try {
+      savedId = localStorage.getItem(CARD_KEY);
+    } catch {
+      /* ignore */
+    }
+
     if (savedId) {
       fetch(`${API_BASE_URL}/api/bingo/${savedId}`)
         .then((res) => res.json())
         .then((data) => {
-          if (data.card) setCard(data.card);
+          if (data.currentRound) setRoundId(data.currentRound);
+          if (!data.card) return;
+          if (data.currentRound && data.card.round !== data.currentRound) {
+            // Last week's card: keep the name so starting a new one is one tap
+            try {
+              localStorage.setItem(NAME_KEY, data.card.name);
+            } catch {
+              /* ignore */
+            }
+            setName(data.card.name);
+            retireOldCard("New week, new Bingo board! Tap Start to begin your fresh card.");
+          } else {
+            setCard(data.card);
+          }
         })
+        .catch(() => {})
         .finally(() => setLoading(false));
     } else {
       setLoading(false);
@@ -127,39 +321,43 @@ export default function Bingo() {
   }, [justFilledIndex]);
 
   useEffect(() => {
-  if (!card || leaderboard.length === 0) return;
+    if (!card || leaderboard.length === 0) return;
 
-  const myIndex = leaderboard.findIndex((e) => e.id === card.id);
-  if (myIndex === -1) return;
+    const myIndex = leaderboard.findIndex((e) => e.id === card.id);
+    if (myIndex === -1) return;
 
-  const myRank = myIndex + 1;
-  const key = `mutmlsa_bingo_last_rank_${card.id}`;
-  const lastRank = localStorage.getItem(key);
+    const myRank = myIndex + 1;
+    const key = `mutmlsa_bingo_last_rank_${card.id}`;
+    const lastRank = localStorage.getItem(key);
 
-  if (lastRank && Number(lastRank) < myRank) {
-    setToast("You've been overtaken on the leaderboard — jump back in!");
-  }
-  localStorage.setItem(key, myRank);
-}, [leaderboard, card]);
+    if (lastRank && Number(lastRank) < myRank) {
+      setToast("You've been overtaken on the leaderboard — jump back in!");
+    }
+    localStorage.setItem(key, myRank);
+  }, [leaderboard, card]);
 
-useEffect(() => {
-  if (toast) {
-    const t = setTimeout(() => setToast(null), 5000);
-    return () => clearTimeout(t);
-  }
-}, [toast]);
+  useEffect(() => {
+    if (toast) {
+      const t = setTimeout(() => setToast(null), 5000);
+      return () => clearTimeout(t);
+    }
+  }, [toast]);
 
   function loadLeaderboard(full = false) {
-  fetch(`${API_BASE_URL}/api/bingo/leaderboard${full ? "?full=true" : ""}`)
-    .then((res) => res.json())
-    .then((data) => setLeaderboard(data.leaderboard || []));
-}
+    fetch(`${API_BASE_URL}/api/bingo/leaderboard${full ? "?full=true" : ""}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setLeaderboard(data.leaderboard || []);
+        if (data.currentRound) setRoundId(data.currentRound);
+      })
+      .catch(() => {});
+  }
 
-function toggleLeaderboardView() {
-  const next = !showAllLeaderboard;
-  setShowAllLeaderboard(next);
-  loadLeaderboard(next);
-}
+  function toggleLeaderboardView() {
+    const next = !showAllLeaderboard;
+    setShowAllLeaderboard(next);
+    loadLeaderboard(next);
+  }
 
   async function handleCreate(e) {
     e.preventDefault();
@@ -172,7 +370,13 @@ function toggleLeaderboardView() {
     const data = await res.json();
     if (data.card) {
       setCard(data.card);
-      localStorage.setItem("mutmlsa_bingo_card_id", data.card.id);
+      try {
+        localStorage.setItem(CARD_KEY, data.card.id);
+        localStorage.setItem(NAME_KEY, data.card.name);
+      } catch {
+        /* ignore */
+      }
+      if (data.card.round) setRoundId(data.card.round);
       loadLeaderboard();
     }
   }
@@ -183,15 +387,27 @@ function toggleLeaderboardView() {
     setInputValue((card.filled_squares || {})[index] || "");
   }
 
-  async function submitSquare(e) {
-    e.preventDefault();
+  async function saveSquare(personName) {
     const res = await fetch(`${API_BASE_URL}/api/bingo/${card.id}/fill`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ squareIndex: activeSquare, personName: inputValue.trim() }),
+      body: JSON.stringify({ squareIndex: activeSquare, personName }),
     });
     const data = await res.json();
-    if (data.card) {
+
+    // The week rolled over while this card was open
+    if (res.status === 409 || data.expired) {
+      retireOldCard("This week's board has ended — a new one is live. Tap Start for a fresh card.");
+      loadLeaderboard();
+      return null;
+    }
+    return data;
+  }
+
+  async function submitSquare(e) {
+    e.preventDefault();
+    const data = await saveSquare(inputValue.trim());
+    if (data && data.card) {
       setCard(data.card);
       setJustFilledIndex(activeSquare);
       setActiveSquare(null);
@@ -205,13 +421,8 @@ function toggleLeaderboardView() {
   }
 
   async function clearSquare() {
-    const res = await fetch(`${API_BASE_URL}/api/bingo/${card.id}/fill`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ squareIndex: activeSquare, personName: "" }),
-    });
-    const data = await res.json();
-    if (data.card) {
+    const data = await saveSquare("");
+    if (data && data.card) {
       setCard(data.card);
       setActiveSquare(null);
       loadLeaderboard();
@@ -228,7 +439,12 @@ function toggleLeaderboardView() {
 
   function selectFoundCard(foundCard) {
     setCard(foundCard);
-    localStorage.setItem("mutmlsa_bingo_card_id", foundCard.id);
+    try {
+      localStorage.setItem(CARD_KEY, foundCard.id);
+      localStorage.setItem(NAME_KEY, foundCard.name);
+    } catch {
+      /* ignore */
+    }
     setSearchResults([]);
   }
 
@@ -244,6 +460,11 @@ function toggleLeaderboardView() {
     if (data.card) {
       setCard(data.card);
       setEditingName(false);
+      try {
+        localStorage.setItem(NAME_KEY, data.card.name);
+      } catch {
+        /* ignore */
+      }
       loadLeaderboard();
     }
   }
@@ -252,81 +473,83 @@ function toggleLeaderboardView() {
 
   const filledCount = card ? Object.keys(card.filled_squares || {}).length : 0;
   const points = filledCount * POINTS_PER_SQUARE;
+  const weekLabel = getWeekLabel(roundId);
 
   return (
-  <section id="bingo" className="border-t border-ink/10 py-20 dark:border-dark-border md:py-28">
-    <AnimatePresence>
-      {toast && (
-        <motion.div
-          initial={{ opacity: 0, y: -12 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -12 }}
-          className="fixed left-1/2 top-4 z-[120] -translate-x-1/2 rounded-sm bg-lab-900 px-4 py-2 text-sm text-paper shadow-lg"
-        >
-          {toast}
-        </motion.div>
-      )}
-    </AnimatePresence>
-    
+    <section id="bingo" className="border-t border-ink/10 py-20 dark:border-dark-border md:py-28">
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            className="fixed left-1/2 top-4 z-[120] w-[90%] max-w-md -translate-x-1/2 rounded-sm bg-lab-900 px-4 py-2 text-center text-sm text-paper shadow-lg"
+          >
+            {toast}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-    
       <div className="mx-auto max-w-2xl px-5 md:px-8">
-        <span className="label-tag text-lab-700 dark:text-lab-500">This week's challenge</span>
+        <span className="label-tag text-lab-700 dark:text-lab-500">
+          This week's challenge{weekLabel ? ` · ${weekLabel}` : ""}
+        </span>
         <h2 className="mt-3 font-display text-3xl font-semibold text-lab-900 md:text-4xl dark:text-dark-ink">
           MUTMLSA Bingo
         </h2>
         <p className="mt-3 max-w-xl text-ink-soft dark:text-dark-ink-soft">
           Find someone who fits each square and write their name in — each
-          square is worth {POINTS_PER_SQUARE} points, {MAX_POINTS} total.
+          square is worth {POINTS_PER_SQUARE} points, {MAX_POINTS} total. A brand-new board goes live
+          every Monday, so you get a fresh card each week.
         </p>
 
         {leaderboard.length > 0 && (
           <div className="mt-6 rounded-sm border border-ink/10 bg-lab-50/50 p-4 dark:border-dark-border dark:bg-dark-surface/40">
-            <p className="label-tag text-lab-700 dark:text-lab-500">Leaderboard</p>
+            <p className="label-tag text-lab-700 dark:text-lab-500">This week's leaderboard</p>
             <div className="mt-2 space-y-1">
               {leaderboard.map((entry, i) => {
-  const isYou = card && entry.id === card.id;
-  return (
-    <div
-      key={entry.id}
-      className={`flex items-center justify-between rounded-sm px-2 py-1 text-sm transition-colors ${
-        isYou ? "bg-coral-500/10 ring-1 ring-coral-500/40" : ""
-      }`}
-    >
-      <span className="flex items-center gap-2 text-ink-soft dark:text-dark-ink-soft">
-        {i + 1}. {entry.name}
-        {isYou && (
-          <span className="label-tag rounded-sm bg-coral-500 px-1.5 py-0.5 text-paper">
-            You
-          </span>
-        )}
-        {entry.blackout && (
-          <span className="label-tag rounded-sm bg-coral-500 px-1.5 py-0.5 text-paper">
-            Blackout
-          </span>
-        )}
-        {!entry.blackout && entry.bingo && (
-          <span className="label-tag rounded-sm bg-lab-600 px-1.5 py-0.5 text-paper">
-            Bingo
-          </span>
-        )}
-      </span>
-      <span className="font-semibold text-lab-800 dark:text-dark-ink">
-        {entry.score * POINTS_PER_SQUARE} pts
-      </span>
-    </div>
-  );
-})}
+                const isYou = card && entry.id === card.id;
+                return (
+                  <div
+                    key={entry.id}
+                    className={`flex items-center justify-between rounded-sm px-2 py-1 text-sm transition-colors ${
+                      isYou ? "bg-coral-500/10 ring-1 ring-coral-500/40" : ""
+                    }`}
+                  >
+                    <span className="flex items-center gap-2 text-ink-soft dark:text-dark-ink-soft">
+                      {i + 1}. {entry.name}
+                      {isYou && (
+                        <span className="label-tag rounded-sm bg-coral-500 px-1.5 py-0.5 text-paper">
+                          You
+                        </span>
+                      )}
+                      {entry.blackout && (
+                        <span className="label-tag rounded-sm bg-coral-500 px-1.5 py-0.5 text-paper">
+                          Blackout
+                        </span>
+                      )}
+                      {!entry.blackout && entry.bingo && (
+                        <span className="label-tag rounded-sm bg-lab-600 px-1.5 py-0.5 text-paper">
+                          Bingo
+                        </span>
+                      )}
+                    </span>
+                    <span className="font-semibold text-lab-800 dark:text-dark-ink">
+                      {entry.score * POINTS_PER_SQUARE} pts
+                    </span>
+                  </div>
+                );
+              })}
 
-{leaderboard.length >= 10 && (
-  <button
-    type="button"
-    onClick={toggleLeaderboardView}
-    className="label-tag mt-2 text-lab-700 underline underline-offset-4 dark:text-lab-500"
-  >
-    {showAllLeaderboard ? "Show top 10 only" : "Show everyone"}
-  </button>
-)}
+              {leaderboard.length >= 10 && (
+                <button
+                  type="button"
+                  onClick={toggleLeaderboardView}
+                  className="label-tag mt-2 text-lab-700 underline underline-offset-4 dark:text-lab-500"
+                >
+                  {showAllLeaderboard ? "Show top 10 only" : "Show everyone"}
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -359,7 +582,7 @@ function toggleLeaderboardView() {
             </form>
 
             <p className="mt-4 label-tag text-ink-soft dark:text-dark-ink-soft">
-              Already started on another device?
+              Already started this week on another device?
             </p>
             <form onSubmit={handleFind} className="mt-2 flex gap-2">
               <input
@@ -412,27 +635,29 @@ function toggleLeaderboardView() {
                 </button>
               </form>
             ) : (
-              <p className="label-tag flex flex-wrap items-center gap-2 text-lab-700 dark:text-lab-500">
-                Playing as {card.name} · {filledCount}/{SQUARES.length} squares · {points}/{MAX_POINTS} pts
+              <div>
+                <p className="label-tag flex flex-wrap items-center gap-2 text-lab-700 dark:text-lab-500">
+                  Playing as {card.name} · {filledCount}/{SQUARES.length} squares · {points}/{MAX_POINTS} pts
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNameInput(card.name);
+                      setEditingName(true);
+                    }}
+                    className="text-ink-soft underline dark:text-dark-ink-soft"
+                  >
+                    Edit
+                  </button>
+                </p>
                 <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-lab-100 dark:bg-dark-surface">
-  <motion.div
-    className="h-full bg-coral-500"
-    initial={{ width: 0 }}
-    animate={{ width: `${(filledCount / SQUARES.length) * 100}%` }}
-    transition={{ duration: 0.5, ease: "easeOut" }}
-  />
-</div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setNameInput(card.name);
-                    setEditingName(true);
-                  }}
-                  className="text-ink-soft underline dark:text-dark-ink-soft"
-                >
-                  Edit
-                </button>
-              </p>
+                  <motion.div
+                    className="h-full bg-coral-500"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${(filledCount / SQUARES.length) * 100}%` }}
+                    transition={{ duration: 0.5, ease: "easeOut" }}
+                  />
+                </div>
+              </div>
             )}
             <NotifyOptIn playerName={card.name} />
             <div className="mt-4 overflow-hidden rounded-sm border border-ink/10 dark:border-dark-border">
@@ -454,7 +679,7 @@ function toggleLeaderboardView() {
                   const justFilled = justFilledIndex === i;
                   return (
                     <motion.button
-                      key={i}
+                      key={`${roundId}-${i}`}
                       type="button"
                       onClick={() => openSquare(i)}
                       disabled={isFree}
