@@ -23,6 +23,7 @@ import Reveal from "./components/Reveal";
 import useDarkMode from "./hooks/useDarkMode";
 import ChatWidget from "./components/ChatWidget";
 import AdminPortal from "./components/AdminPortal";
+import HallOfFame from "./components/HallOfFame";
 
 // Maps a specific section hash to the tab it lives in, so a notification
 // (or any shared link) linking to e.g. "#bingo" lands on the right tab
@@ -42,6 +43,7 @@ const HASH_TO_TAB = {
   "#students-y3": "archive",
   "#students-y4": "archive",
   "#game-night": "archive",
+  "#hall-of-fame": "get involved",
 };
 
 export default function App() {
@@ -109,6 +111,9 @@ export default function App() {
           <>
             <Reveal>
               <Events />
+            </Reveal>
+               <Reveal>
+             <HallOfFame />
             </Reveal>
             <Reveal>
               <Bingo />
