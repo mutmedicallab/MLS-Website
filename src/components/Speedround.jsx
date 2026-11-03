@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import confetti from "canvas-confetti";
 import { API_BASE_URL } from "../config/api";
 import { getCurrentPeriodId } from "../utils/periodId";
+import { ensureYear, claimMatches } from "../utils/yearGate";
 
 const WEEK_ID = getCurrentPeriodId(2);
 const ROUND_SECONDS = 60;
@@ -562,6 +563,8 @@ export default function SpeedRound() {
   const [periods, setPeriods] = useState([]);
   const [existingAttempt, setExistingAttempt] = useState(null);
   const [checking, setChecking] = useState(false);
+  const [yearPick, setYearPick] = useState("");
+  const [yearError, setYearError] = useState("");
   const timerRef = useRef(null);
 
   useEffect(() => {
@@ -616,6 +619,12 @@ export default function SpeedRound() {
     if (!name.trim()) return;
     setChecking(true);
     try {
+      const gate = await ensureYear(name, yearPick);
+      if (!gate.ok) {
+        setYearError(gate.error);
+        return;
+      }
+      setYearError("");
       const res = await fetch(
         `${API_BASE_URL}/api/sprint/attempt?week=${encodeURIComponent(WEEK_ID)}&name=${encodeURIComponent(name.trim())}`
       );
@@ -684,7 +693,7 @@ export default function SpeedRound() {
         <p className="mt-2 text-sm text-ink-soft dark:text-dark-ink-soft">
           {getPlayerYear()
             ? `Terms are matched to Year ${getPlayerYear()}.`
-            : "Claim your year in the Hall of Fame to get terms matched to your level."}
+            : "Pick your year when you start to get terms matched to your level."}
         </p>
 
         {currentLeader && (
@@ -746,7 +755,7 @@ export default function SpeedRound() {
             transition={{ duration: 0.35 }}
             className="mt-8 max-w-sm"
           >
-            <form onSubmit={checkExistingAndStart} className="flex gap-2">
+            <form onSubmit={checkExistingAndStart} className="flex flex-wrap gap-2">
               <input
                 type="text"
                 value={name}
@@ -754,6 +763,19 @@ export default function SpeedRound() {
                 placeholder="Your name or nickname"
                 className="flex-1 rounded-sm border border-ink/15 bg-transparent px-3 py-2 text-sm dark:border-dark-border dark:text-dark-ink"
               />
+              {!claimMatches(name) && (
+                <select
+                  value={yearPick}
+                  onChange={(e) => setYearPick(e.target.value)}
+                  className="rounded-sm border border-ink/15 bg-transparent px-3 py-2 text-sm text-ink dark:border-dark-border dark:bg-dark-surface dark:text-dark-ink"
+                >
+                  <option value="">Your year</option>
+                  <option value="1">Year 1</option>
+                  <option value="2">Year 2</option>
+                  <option value="3">Year 3</option>
+                  <option value="4">Year 4</option>
+                </select>
+              )}
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 type="submit"
@@ -763,6 +785,8 @@ export default function SpeedRound() {
                 {checking ? "Checking…" : "Start"}
               </motion.button>
             </form>
+
+            {yearError && <p className="mt-3 text-sm text-coral-600">{yearError}</p>}
 
             {existingAttempt && (
               <p className="mt-3 text-sm text-coral-600">
