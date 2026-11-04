@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { API_BASE_URL } from "../config/api";
 import { exportToCSV, exportToExcel, exportToPDF } from "../utils/exportData";
 import { isValidRegNumber } from "../utils/regNumber";
+import BingoReview from "./BingoReview";
 
 const CURRENT_PERIOD = { academicYear: "2026/2027", semester: "Sem 1" };
 const YEAR_ORDER = ["Y1", "Y2", "Y3", "Y4"];
@@ -13,6 +14,7 @@ const TABS = [
   { key: "subscribers", label: "Subscribers" },
   { key: "events", label: "Events" },
   { key: "notify", label: "Notify" },
+  { key: "bingo", label: "Bingo" },
 ];
 
 function toWhatsAppNumber(phone) {
@@ -856,9 +858,9 @@ async function saveApplicationRegNumber(applicationId, value) {
           )}
         </form>
       </div>
-    ),
+        ),
+    bingo: <BingoReview authedFetch={authedFetch} />,
   };
-
   return (
     <div className="mx-auto max-w-4xl px-5 py-12">
       <motion.div

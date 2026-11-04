@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import confetti from "canvas-confetti";
 import { API_BASE_URL } from "../config/api";
@@ -9,6 +9,13 @@ const POINTS_PER_SQUARE = 10;
 const HEADER_LETTERS = ["B", "I", "N", "G", "O"];
 const CARD_KEY = "mutmlsa_bingo_card_id";
 const NAME_KEY = "mutmlsa_bingo_last_name";
+
+// Filling two boxes closer together than this triggers a "did you really ask?" check
+const FAST_FILL_MS = 30000;
+
+function normName(v) {
+  return String(v || "").trim().toLowerCase().replace(/\s+/g, " ");
+}
 
 // ---------------------------------------------------------------------------
 // SQUARE POOL — the board for each week is drawn from this list automatically.
@@ -251,6 +258,9 @@ export default function Bingo() {
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState("");
   const [toast, setToast] = useState(null);
+  const [squareWarning, setSquareWarning] = useState("");
+  const [fastCheck, setFastCheck] = useState(false);
+  const lastFillAt = useRef(0);
   const [showAllLeaderboard, setShowAllLeaderboard] = useState(false);
   // The server decides which week it is, so a wrong phone clock can't show the wrong board.
   const [roundId, setRoundId] = useState(() => getCurrentWeekId());
@@ -383,6 +393,8 @@ export default function Bingo() {
 
   function openSquare(index) {
     if (index === 12) return;
+    setSquareWarning("");
+    setFastCheck(false);
     setActiveSquare(index);
     setInputValue((card.filled_squares || {})[index] || "");
   }
@@ -404,10 +416,53 @@ export default function Bingo() {
     return data;
   }
 
-  async function submitSquare(e) {
-    e.preventDefault();
-    const data = await saveSquare(inputValue.trim());
+  // Friendly rule checks before a name is saved. Returns a message, or "" if it looks fine.
+  function nameProblem(value) {
+    if (!value) return "Type the name of the person you asked first.";
+    if (!/[a-zA-Z]{2,}/.test(value)) {
+      return "That doesn't look like a real name. Type the name of the person you asked.";
+    }
+    const mine = normName(card && card.name);
+    if (mine && normName(value) === mine) {
+      return "That's your own name! Every box needs a different person, not you.";
+    }
+    const used = Object.entries((card && card.filled_squares) || {}).some(
+      ([i, v]) => Number(i) !== activeSquare && Number(i) !== 12 && normName(v) === normName(value)
+    );
+    if (used) {
+      return `You've already used "${value}" in another box. Remember: every box needs a different person.`;
+    }
+    return "";
+  }
+
+  async function submitSquare(e, confirmed = false) {
+    if (e) e.preventDefault();
+    const value = inputValue.trim();
+
+    const problem = nameProblem(value);
+    if (problem) {
+      setFastCheck(false);
+      setSquareWarning(problem);
+      return;
+    }
+
+    // Too quick to have really asked someone? Check before saving.
+    const gap = Date.now() - lastFillAt.current;
+    if (!confirmed && lastFillAt.current && gap < FAST_FILL_MS) {
+      setSquareWarning("");
+      setFastCheck(true);
+      return;
+    }
+
+    setSquareWarning("");
+    setFastCheck(false);
+    const data = await saveSquare(value);
+    if (data && data.error && !data.card) {
+      setSquareWarning(data.error);
+      return;
+    }
     if (data && data.card) {
+      lastFillAt.current = Date.now();
       setCard(data.card);
       setJustFilledIndex(activeSquare);
       setActiveSquare(null);
@@ -737,12 +792,20 @@ export default function Bingo() {
                     className="w-full max-w-sm rounded-sm bg-paper p-5 dark:bg-dark-bg"
                   >
                     <p className="text-sm text-ink dark:text-dark-ink">{SQUARES[activeSquare]}</p>
+                    <p className="mt-2 text-xs text-ink-soft dark:text-dark-ink-soft">
+                      Ask the person first, then type their name. Every box needs a different person, and
+                      not yourself.
+                    </p>
                     <form onSubmit={submitSquare} className="mt-4 flex gap-2">
                       <input
                         type="text"
                         autoFocus
                         value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
+                        onChange={(e) => {
+                          setInputValue(e.target.value);
+                          setSquareWarning("");
+                          setFastCheck(false);
+                        }}
                         placeholder="Their name"
                         className="flex-1 rounded-sm border border-ink/15 bg-transparent px-3 py-2 text-sm dark:border-dark-border dark:text-dark-ink"
                       />
@@ -754,6 +817,40 @@ export default function Bingo() {
                         Save
                       </motion.button>
                     </form>
+
+                    {squareWarning && (
+                      <p className="mt-3 rounded-sm bg-coral-500/10 px-3 py-2 text-xs text-coral-600">
+                        {squareWarning}
+                      </p>
+                    )}
+
+                    {fastCheck && (
+                      <div className="mt-3 rounded-sm border border-coral-500/40 bg-coral-500/5 p-3">
+                        <p className="text-xs font-semibold text-coral-600">Whoa, that was quick!</p>
+                        <p className="mt-1 text-xs text-ink-soft dark:text-dark-ink-soft">
+                          Bingo only counts when you actually find and ask the person. Are you sure you
+                          asked {inputValue.trim() || "them"} this one? Players who fill in made-up names
+                          can be removed from the leaderboard.
+                        </p>
+                        <div className="mt-2 flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => submitSquare(null, true)}
+                            className="rounded-sm bg-lab-800 px-3 py-1.5 text-xs font-semibold text-paper dark:bg-lab-600"
+                          >
+                            Yes, I asked them
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setFastCheck(false)}
+                            className="rounded-sm border border-ink/15 px-3 py-1.5 text-xs text-ink dark:border-dark-border dark:text-dark-ink"
+                          >
+                            Let me go back
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="mt-3 flex items-center justify-between">
                       <button
                         type="button"
