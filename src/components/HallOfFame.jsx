@@ -128,6 +128,7 @@ export default function HallOfFame() {
     data.past &&
     (data.past.weeks.length > 0 || data.past.months.length > 0 || data.past.semesters.length > 0);
   const cohortLabel = COHORTS.find((c) => c.id === cohort).label;
+  const lastWeekYears = Object.values((data.lastWeek && data.lastWeek.cohorts) || {}).filter(Boolean);
 
   return (
     <section id="hall-of-fame" className="border-t border-ink/10 py-20 dark:border-dark-border md:py-28">
@@ -142,16 +143,30 @@ export default function HallOfFame() {
           champion and a champion for each year of study.
         </p>
 
-        {data.lastWeek && data.lastWeek.winner && (
+        {data.lastWeek && (data.lastWeek.winner || lastWeekYears.length > 0) && (
           <div className="mt-6 rounded-sm border border-coral-500/30 bg-coral-500/5 px-4 py-3">
-            <div className="flex items-center justify-between gap-3">
-              <span className="label-tag text-coral-600">Last week's champion · {data.lastWeek.label}</span>
-              <span className="text-right text-sm font-semibold text-lab-900 dark:text-dark-ink">
-                🏆 {data.lastWeek.winner.name} · {data.lastWeek.winner.points} pts
-              </span>
-            </div>
+            <span className="label-tag text-coral-600">Last week's champions · {data.lastWeek.label}</span>
+            {data.lastWeek.winner && (
+              <p className="mt-2 flex items-center justify-between gap-3 text-sm font-semibold text-lab-900 dark:text-dark-ink">
+                <span>🏆 Overall: {data.lastWeek.winner.name}</span>
+                <span>{data.lastWeek.winner.points} pts</span>
+              </p>
+            )}
             {data.lastWeek.note && (
               <p className="mt-1 text-xs text-ink-soft dark:text-dark-ink-soft">{data.lastWeek.note}</p>
+            )}
+            {lastWeekYears.length > 0 && (
+              <div className="mt-2 space-y-1">
+                {["1", "2", "3", "4"].map((y) => {
+                  const w = data.lastWeek.cohorts && data.lastWeek.cohorts[y];
+                  return (
+                    <p key={y} className="flex items-center justify-between gap-3 text-sm text-ink-soft dark:text-dark-ink-soft">
+                      <span>🎓 Year {y}: {w ? w.name : "no winner yet"}</span>
+                      {w && <span className="font-semibold text-lab-800 dark:text-dark-ink">{w.points} pts</span>}
+                    </p>
+                  );
+                })}
+              </div>
             )}
           </div>
         )}
@@ -171,6 +186,28 @@ export default function HallOfFame() {
               {t.label}
             </button>
           ))}
+        </div>
+
+        <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
+          {["1", "2", "3", "4"].map((y) => {
+            const top = panel.cohorts && panel.cohorts[y] && panel.cohorts[y][0];
+            return (
+              <button
+                key={y}
+                type="button"
+                onClick={() => setCohort(y)}
+                className="rounded-sm border border-ink/10 px-3 py-2 text-left transition-colors hover:bg-lab-100/60 dark:border-dark-border dark:hover:bg-dark-surface/70"
+              >
+                <span className="label-tag text-lab-700 dark:text-lab-500">Year {y} leader</span>
+                <span className="mt-1 block truncate text-sm font-semibold text-lab-900 dark:text-dark-ink">
+                  {top ? top.name : "—"}
+                </span>
+                <span className="text-xs text-ink-soft dark:text-dark-ink-soft">
+                  {top ? `${top.points} pts` : "No one yet"}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
         <div className="mt-3 flex flex-wrap gap-2">
@@ -370,12 +407,20 @@ export default function HallOfFame() {
                                   <p className="mt-1 text-xs text-ink-soft dark:text-dark-ink-soft">{p.note}</p>
                                 )}
                                 {p.cohorts && Object.keys(p.cohorts).length > 0 && (
-                                  <p className="mt-1 text-xs text-ink-soft dark:text-dark-ink-soft">
+                                  <div className="mt-2 space-y-0.5 border-t border-ink/5 pt-2 dark:border-dark-border">
                                     {["1", "2", "3", "4"]
                                       .filter((y) => p.cohorts[y] && p.cohorts[y][0])
-                                      .map((y) => `Y${y}: ${p.cohorts[y][0].name} (${p.cohorts[y][0].points})`)
-                                      .join(" · ")}
-                                  </p>
+                                      .map((y) => (
+                                        <div key={y} className="flex items-center justify-between text-sm">
+                                          <span className="text-ink-soft dark:text-dark-ink-soft">
+                                            🎓 Year {y}: {p.cohorts[y][0].name}
+                                          </span>
+                                          <span className="font-semibold text-lab-800 dark:text-dark-ink">
+                                            {p.cohorts[y][0].points} pts
+                                          </span>
+                                        </div>
+                                      ))}
+                                  </div>
                                 )}
                               </div>
                             ))}
