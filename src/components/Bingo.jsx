@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import confetti from "canvas-confetti";
 import { API_BASE_URL } from "../config/api";
-import { getCurrentWeekId, getWeekLabel } from "../utils/periodId";
+import { getCurrentWeekId } from "../utils/periodId";
 import NotifyOptIn from "./Notifyoptin";
 
 const POINTS_PER_SQUARE = 10;
@@ -180,10 +180,11 @@ function seededShuffle(arr, seed) {
   return copy;
 }
 
-// Builds the 25-square board for a round id like "week-42".
+// Builds the 25-square board for a board id like "card-2" (or an old weekly one like "week-42").
 function buildBoard(roundId) {
-  const match = /^week-(-?\d+)$/.exec(roundId || "");
-  const weekNumber = match ? Number(match[1]) : 0;
+  const weekly = /^week-(-?\d+)$/.exec(roundId || "");
+  const numbered = /^card-(\d+)$/.exec(roundId || "");
+  const weekNumber = weekly ? Number(weekly[1]) : numbered ? Number(numbered[1]) - 1 : 0;
   const cycle = Math.floor(weekNumber / BOARDS_PER_CYCLE);
   const slot = ((weekNumber % BOARDS_PER_CYCLE) + BOARDS_PER_CYCLE) % BOARDS_PER_CYCLE;
 
@@ -265,7 +266,8 @@ export default function Bingo() {
   // The server decides which week it is, so a wrong phone clock can't show the wrong board.
   const [roundId, setRoundId] = useState(() => getCurrentWeekId());
 
-  const SQUARES = buildBoard(roundId);
+  // Each card keeps its own board until it is finished
+  const SQUARES = buildBoard(card ? card.board_seed || card.round : roundId);
   const MAX_POINTS = SQUARES.length * POINTS_PER_SQUARE;
 
   // Called when a saved card belongs to a finished week
@@ -294,15 +296,15 @@ export default function Bingo() {
         .then((data) => {
           if (data.currentRound) setRoundId(data.currentRound);
           if (!data.card) return;
-          if (data.currentRound && data.card.round !== data.currentRound) {
-            // Last week's card: keep the name so starting a new one is one tap
+          if (/^week-/.test(data.card.round || "") && data.currentRound && data.card.round !== data.currentRound) {
+            // An old weekly card: keep the name so starting a new one is one tap
             try {
               localStorage.setItem(NAME_KEY, data.card.name);
             } catch {
               /* ignore */
             }
             setName(data.card.name);
-            retireOldCard("New week, new Bingo board! Tap Start to begin your fresh card.");
+            retireOldCard("Welcome back! Tap Start to get your card.");
           } else {
             setCard(data.card);
           }
@@ -369,13 +371,39 @@ export default function Bingo() {
     loadLeaderboard(next);
   }
 
+  // Re-reads this card from the server (to see if the committee has confirmed it yet)
+  async function refreshCard(showToast = false) {
+    if (!card) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/bingo/${card.id}`);
+      const data = await res.json();
+      if (data.card) {
+        setCard(data.card);
+        if (showToast) {
+          setToast(
+            data.card.status === "confirmed"
+              ? "Confirmed! Tap \"Get my next card\" to continue."
+              : "Still waiting for the committee to confirm your card."
+          );
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
   async function handleCreate(e) {
     e.preventDefault();
     if (!name.trim()) return;
+    await startCard(name);
+  }
+
+  // Gets the player's card: their current one, or the next one once the last is confirmed
+  async function startCard(forName) {
     const res = await fetch(`${API_BASE_URL}/api/bingo`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({ name: forName }),
     });
     const data = await res.json();
     if (data.card) {
@@ -393,6 +421,14 @@ export default function Bingo() {
 
   function openSquare(index) {
     if (index === 12) return;
+    if (card.status === "pending") {
+      setToast("Your card is complete — waiting for the committee to confirm it.");
+      return;
+    }
+    if (card.status === "confirmed") {
+      setToast("This card is confirmed. Tap \"Get my next card\" to continue.");
+      return;
+    }
     setSquareWarning("");
     setFastCheck(false);
     setActiveSquare(index);
@@ -407,10 +443,17 @@ export default function Bingo() {
     });
     const data = await res.json();
 
-    // The week rolled over while this card was open
-    if (res.status === 409 || data.expired) {
-      retireOldCard("This week's board has ended — a new one is live. Tap Start for a fresh card.");
+    // An old weekly card from before the switch to finish-and-confirm cards
+    if (data.expired) {
+      retireOldCard(data.error || "That card is closed. Tap Start to get your card.");
       loadLeaderboard();
+      return null;
+    }
+    // The card was completed or confirmed in the meantime
+    if (res.status === 409 || data.locked) {
+      setActiveSquare(null);
+      if (data.error) setToast(data.error);
+      refreshCard();
       return null;
     }
     return data;
@@ -528,7 +571,6 @@ export default function Bingo() {
 
   const filledCount = card ? Object.keys(card.filled_squares || {}).length : 0;
   const points = filledCount * POINTS_PER_SQUARE;
-  const weekLabel = getWeekLabel(roundId);
 
   return (
     <section id="bingo" className="border-t border-ink/10 py-20 dark:border-dark-border md:py-28">
@@ -547,15 +589,16 @@ export default function Bingo() {
 
       <div className="mx-auto max-w-2xl px-5 md:px-8">
         <span className="label-tag text-lab-700 dark:text-lab-500">
-          This week's challenge{weekLabel ? ` · ${weekLabel}` : ""}
+          Bingo challenge
         </span>
         <h2 className="mt-3 font-display text-3xl font-semibold text-lab-900 md:text-4xl dark:text-dark-ink">
           MUTMLSA Bingo
         </h2>
         <p className="mt-3 max-w-xl text-ink-soft dark:text-dark-ink-soft">
           Find someone who fits each square and write their name in — each
-          square is worth {POINTS_PER_SQUARE} points, {MAX_POINTS} total. A brand-new board goes live
-          every Monday, so you get a fresh card each week.
+          square is worth {POINTS_PER_SQUARE} points, {MAX_POINTS} total. Fill your whole card and the
+          committee will confirm it — then you get a brand-new card. The leaderboard counts the squares you fill
+          each week.
         </p>
 
         {leaderboard.length > 0 && (
@@ -637,7 +680,7 @@ export default function Bingo() {
             </form>
 
             <p className="mt-4 label-tag text-ink-soft dark:text-dark-ink-soft">
-              Already started this week on another device?
+              Already started on another device?
             </p>
             <form onSubmit={handleFind} className="mt-2 flex gap-2">
               <input
@@ -715,6 +758,40 @@ export default function Bingo() {
               </div>
             )}
             <NotifyOptIn playerName={card.name} />
+
+            {card.status === "pending" && (
+              <div className="mt-4 rounded-sm border border-coral-500/40 bg-coral-500/5 p-3">
+                <p className="text-sm font-semibold text-lab-900 dark:text-dark-ink">🎉 Your card is complete!</p>
+                <p className="mt-1 text-xs text-ink-soft dark:text-dark-ink-soft">
+                  The committee will check it and confirm it. Once it is confirmed you'll get a brand-new card.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => refreshCard(true)}
+                  className="mt-2 rounded-sm border border-lab-700 px-3 py-1.5 text-xs font-semibold text-lab-700 dark:border-lab-500 dark:text-lab-500"
+                >
+                  Check if it's confirmed
+                </button>
+              </div>
+            )}
+
+            {card.status === "confirmed" && (
+              <div className="mt-4 rounded-sm border border-lab-600/40 bg-lab-100/40 p-3 dark:bg-dark-surface/40">
+                <p className="text-sm font-semibold text-lab-900 dark:text-dark-ink">✅ Card confirmed!</p>
+                <p className="mt-1 text-xs text-ink-soft dark:text-dark-ink-soft">
+                  Well done. Ready for another round with a new board?
+                </p>
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  type="button"
+                  onClick={() => startCard(card.name)}
+                  className="mt-2 rounded-sm bg-coral-500 px-4 py-2 text-sm font-semibold text-paper"
+                >
+                  Get my next card
+                </motion.button>
+              </div>
+            )}
+
             <div className="mt-4 overflow-hidden rounded-sm border border-ink/10 dark:border-dark-border">
               <div className="grid grid-cols-5 bg-lab-900">
                 {HEADER_LETTERS.map((letter) => (
@@ -734,7 +811,7 @@ export default function Bingo() {
                   const justFilled = justFilledIndex === i;
                   return (
                     <motion.button
-                      key={`${roundId}-${i}`}
+                      key={`${card.id}-${i}`}
                       type="button"
                       onClick={() => openSquare(i)}
                       disabled={isFree}
