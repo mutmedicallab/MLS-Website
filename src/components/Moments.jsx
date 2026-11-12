@@ -95,12 +95,41 @@ import Launch8 from "../assets/moments/2023-2024/sem 2/Launch/02.jpg";
 
 import gameNightVideo from "../assets/moments/2025-2026/sem 2/game-night/game-night video.mp4";
 
+//2026-2027 Sem 1
+import interClubGameNight from "../assets/moments/2026-2027/sem 1/images/Interclub-Game-night/01.jpg";
+import interClubGameNight2 from "../assets/moments/2026-2027/sem 1/images/Interclub-Game-night/02.jpg";
+import interClubGameNight3 from "../assets/moments/2026-2027/sem 1/images/interclub-Game-night/03.jpg";
+import interClubGameNight4 from "../assets/moments/2026-2027/sem 1/images/Interclub-Game-night/04.jpg";
+
+import kemelsaTournament from "../assets/moments/2026-2027/sem 1/images/Kemelsa-Tournament/01.jpeg";
+import kemelsaTournament2 from "../assets/moments/2026-2027/sem 1/images/Kemelsa-Tournament/02.jpeg";
+import kemelsaTournament3 from "../assets/moments/2026-2027/sem 1/images/Kemelsa-Tournament/04.jpeg";
+
 // Grouped by academic year (since semesters span two calendar years),
 // then by semester, then individual events. Most recent first — add
 // new academic years/semesters/events here as photos come in. Empty
 // `events: []` arrays are placeholders for years not yet populated.
 
 const MOMENTS_BY_PERIOD = [
+  {
+    academicYear: "2026/2027",
+    semester: "Sem 1",
+    events: [
+      {
+        caption: "InterClub Game Night",
+        tagline: "Good Friends, great moves and a few bad ones",
+        type: "slideshow",
+        photos:[interClubGameNight, interClubGameNight2, interClubGameNight3, interClubGameNight4],
+      },
+      {
+        caption: "Kemelsa Tournament",
+        tagline: "Local pride, big league energy",
+        type: "slideshow",
+        photos:[kemelsaTournament, kemelsaTournament2, kemelsaTournament3],
+
+      }
+    ],
+  },
   {
     academicYear: "2025/2026",
     semester: "Sem 2",
