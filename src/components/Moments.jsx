@@ -98,7 +98,7 @@ import gameNightVideo from "../assets/moments/2025-2026/sem 2/game-night/game-ni
 //2026-2027 Sem 1
 import interClubGameNight from "../assets/moments/2026-2027/sem 1/images/Interclub-Game-night/01.jpg";
 import interClubGameNight2 from "../assets/moments/2026-2027/sem 1/images/Interclub-Game-night/02.jpg";
-import interClubGameNight3 from "../assets/moments/2026-2027/sem 1/images/interclub-Game-night/03.jpg";
+import interClubGameNight3 from "../assets/moments/2026-2027/sem 1/images/Interclub-Game-night/03.jpg";
 import interClubGameNight4 from "../assets/moments/2026-2027/sem 1/images/Interclub-Game-night/04.jpg";
 
 import kemelsaTournament from "../assets/moments/2026-2027/sem 1/images/Kemelsa-Tournament/01.jpeg";
