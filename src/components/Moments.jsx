@@ -104,6 +104,15 @@ import interClubGameNight4 from "../assets/moments/2026-2027/sem 1/images/Interc
 import kemelsaTournament from "../assets/moments/2026-2027/sem 1/images/Kemelsa-Tournament/01.jpeg";
 import kemelsaTournament2 from "../assets/moments/2026-2027/sem 1/images/Kemelsa-Tournament/02.jpeg";
 import kemelsaTournament3 from "../assets/moments/2026-2027/sem 1/images/Kemelsa-Tournament/04.jpeg";
+import kemelsaTournament4 from "../assets/moments/2026-2027/sem 1/images/Kemelsa-Tournament/05.jpeg";
+import kemelsaTournament5 from "../assets/moments/2026-2027/sem 1/images/Kemelsa-Tournament/06.jpeg";
+import kemelsaTournament6 from "../assets/moments/2026-2027/sem 1/images/Kemelsa-Tournament/07.jpeg";
+import kemelsaTournament7 from "../assets/moments/2026-2027/sem 1/images/Kemelsa-Tournament/08.jpeg";
+import kemelsaTournament8 from "../assets/moments/2026-2027/sem 1/images/Kemelsa-Tournament/09.jpeg";
+import kemelsaTournament9 from "../assets/moments/2026-2027/sem 1/images/Kemelsa-Tournament/010.jpeg";
+import kemelsaTournament10 from "../assets/moments/2026-2027/sem 1/images/Kemelsa-Tournament/011.jpeg";
+import kemelsaTournament11 from "../assets/moments/2026-2027/sem 1/images/Kemelsa-Tournament/012.jpeg";
+import kemelsaTournament12 from "../assets/moments/2026-2027/sem 1/images/Kemelsa-Tournament/013.jpeg";
 
 // Grouped by academic year (since semesters span two calendar years),
 // then by semester, then individual events. Most recent first — add
@@ -125,7 +134,7 @@ const MOMENTS_BY_PERIOD = [
         caption: "Kemelsa Tournament",
         tagline: "Local pride, big league energy",
         type: "slideshow",
-        photos:[kemelsaTournament, kemelsaTournament2, kemelsaTournament3],
+        photos:[kemelsaTournament, kemelsaTournament2, kemelsaTournament3, kemelsaTournament4, kemelsaTournament5, kemelsaTournament6, kemelsaTournament7, kemelsaTournament8, kemelsaTournament9, kemelsaTournament10, kemelsaTournament11, kemelsaTournament12],
 
       }
     ],
