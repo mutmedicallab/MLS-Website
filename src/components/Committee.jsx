@@ -38,7 +38,7 @@ const MEMBERS = [
     initials: "1st Yr Reps",
     slides: [
       { name: "Gloria Amukuje", photo: firstYearRepresentative },
-      { name: "Stephen", photo: secondFirstYearRepresentative },
+      { name: "Stephen Dume Karisa", photo: secondFirstYearRepresentative },
     ],
   },
 ];
