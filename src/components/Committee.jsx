@@ -1,6 +1,7 @@
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import Reveal from "./Reveal";
 import TiltCard from "./TiltCard";
-import Slideshow from "./Slideshow";
 
 import chairPerson from "../assets/committee/Cherrily.jpeg";
 import viceChairperson from "../assets/committee/brianlore.jpeg";
@@ -16,6 +17,8 @@ import thirdYearRepresentative from "../assets/committee/Anna.jpeg";
 import firstYearRepresentative from "../assets/committee/Gloria.jpeg";
 import secondFirstYearRepresentative from "../assets/committee/Stephen.jpeg";
 
+const SLIDE_MS = 4500; // how long each person stays on screen
+
 const MEMBERS = [
   { role: "Chairperson", name: "Cherrily Ochieng", initials: "CP", photo: chairPerson },
   { role: "Vice Chairperson", name: "Brian Otieno", initials: "VC", photo: viceChairperson },
@@ -29,15 +32,87 @@ const MEMBERS = [
   { role: "Third Year Representative", name: "Anna Kendy", initials: "3rd Yr Rep", photo: thirdYearRepresentative },
   { role: "Second Year Representative", name: "Sharon Akinyi", initials: "2nd Yr Rep", photo: null },
   {
-    // Two first-year representatives share one card: the photos change by themselves,
-    // and the names show both. Put Stephen's full name in place of "Stephen".
+    // Both first-year representatives share one card. The photo AND the name change together.
+    // Put Stephen's full name in place of "Stephen".
     role: "First Year Representatives",
-    name: "Gloria Amukuje & Stephen",
-    type: "slideshow",
     initials: "1st Yr Reps",
-    photos: [firstYearRepresentative, secondFirstYearRepresentative],
+    slides: [
+      { name: "Gloria Amukuje", photo: firstYearRepresentative },
+      { name: "Stephen", photo: secondFirstYearRepresentative },
+    ],
   },
 ];
+
+function MemberCard({ m }) {
+  const slides = m.slides || null;
+  const [index, setIndex] = useState(0);
+
+  // Move to the next person every few seconds
+  useEffect(() => {
+    if (!slides || slides.length < 2) return undefined;
+    const timer = setInterval(() => setIndex((i) => (i + 1) % slides.length), SLIDE_MS);
+    return () => clearInterval(timer);
+  }, [slides]);
+
+  const current = slides ? slides[index] : null;
+  const photo = current ? current.photo : m.photo;
+  const name = current ? current.name : m.name;
+
+  return (
+    <TiltCard className="overflow-hidden rounded-sm border border-ink/10 bg-lab-50/50 dark:border-dark-border dark:bg-dark-surface/40">
+      <div className="relative flex aspect-square items-center justify-center overflow-hidden bg-lab-800 dark:bg-lab-700">
+        {photo ? (
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.img
+              key={photo}
+              src={photo}
+              alt={name}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.45 }}
+              className="absolute inset-0 h-full w-full object-cover object-top"
+            />
+          </AnimatePresence>
+        ) : (
+          <span className="font-display text-4xl font-semibold text-lab-100">{m.initials}</span>
+        )}
+
+        {slides && slides.length > 1 && (
+          <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
+            {slides.map((s, i) => (
+              <button
+                key={s.name}
+                type="button"
+                aria-label={`Show ${s.name}`}
+                onClick={() => setIndex(i)}
+                className={`h-1.5 rounded-full transition-all ${
+                  i === index ? "w-5 bg-paper" : "w-1.5 bg-paper/50"
+                }`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="p-5">
+        <p className="label-tag text-coral-600 dark:text-coral-500">{m.role}</p>
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.p
+            key={name}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.3 }}
+            className="mt-1 font-display text-lg font-medium text-lab-900 dark:text-dark-ink"
+          >
+            {name}
+          </motion.p>
+        </AnimatePresence>
+      </div>
+    </TiltCard>
+  );
+}
 
 export default function Committee() {
   return (
@@ -54,31 +129,7 @@ export default function Committee() {
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {MEMBERS.map((m, i) => (
             <Reveal key={m.role} delay={i * 0.06}>
-              <TiltCard className="overflow-hidden rounded-sm border border-ink/10 bg-lab-50/50 dark:border-dark-border dark:bg-dark-surface/40">
-                <div className="flex aspect-square items-center justify-center bg-lab-800 dark:bg-lab-700">
-                  {m.type === "slideshow" && m.photos && m.photos.length > 0 ? (
-                    <div className="relative h-full w-full">
-                      <Slideshow photos={m.photos} seed={i} objectPosition="top" />
-                    </div>
-                  ) : m.photo ? (
-                    <img
-                      src={m.photo}
-                      alt={m.name}
-                      className="h-full w-full object-cover object-top"
-                    />
-                  ) : (
-                    <span className="font-display text-4xl font-semibold text-lab-100">
-                      {m.initials}
-                    </span>
-                  )}
-                </div>
-                <div className="p-5">
-                  <p className="label-tag text-coral-600 dark:text-coral-500">{m.role}</p>
-                  <p className="mt-1 font-display text-lg font-medium text-lab-900 dark:text-dark-ink">
-                    {m.name}
-                  </p>
-                </div>
-              </TiltCard>
+              <MemberCard m={m} />
             </Reveal>
           ))}
         </div>
