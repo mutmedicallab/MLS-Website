@@ -1,5 +1,6 @@
 import Reveal from "./Reveal";
 import TiltCard from "./TiltCard";
+import Slideshow from "./Slideshow";
 
 import chairPerson from "../assets/committee/Cherrily.jpeg";
 import viceChairperson from "../assets/committee/brianlore.jpeg";
@@ -11,8 +12,9 @@ import sargentAtArm from "../assets/committee/Joseph.jpg";
 import publicRelationsOfficer from "../assets/committee/parapanda.jpeg";
 import fourthYearRepresentative from "../assets/committee/Ibrahim.jpeg";
 import thirdYearRepresentative from "../assets/committee/Anna.jpeg";
-import secondYearRepresentative from "../assets/committee/Sharon.jpeg";
-//import firstYearRepresentative from "../assets/committee/.jpeg";
+//import secondYearRepresentative from "../assets/committee/Sharon.jpeg";
+import firstYearRepresentative from "../assets/committee/Gloria.jpeg";
+import secondFirstYearRepresentative from "../assets/committee/Stephen.jpeg";
 
 const MEMBERS = [
   { role: "Chairperson", name: "Cherrily Ochieng", initials: "CP", photo: chairPerson },
@@ -23,10 +25,18 @@ const MEMBERS = [
   { role: "Organizing Secretary", name: "Japheth Mambo", initials: "OS", photo: organizingSecretary },
   { role: "Sargent-At-Arm", name: "Joseph Macharia", initials: "SA", photo: sargentAtArm },
   { role: "Public Relations Officer", name: "Julius Kimani", initials: "PR", photo: publicRelationsOfficer },
-  {role:  "Fourth Year Representative", name: "Ibrahim Mbugua", initials: "4th Yr Rep", photo: fourthYearRepresentative},
-  { role: "Third Year Representative", name: "Anna Kendy", initials: " 3rd Yr Rep", photo: thirdYearRepresentative },
-  { role: "Second Year Representative", name: "Sharon Akinyi", initials: " 2nd Yr Rep", photo: null },
-  { role: "First Year Representative", name: "To be announced", initials: " 1st Yr Rep", photo: null },
+  { role: "Fourth Year Representative", name: "Ibrahim Mbugua", initials: "4th Yr Rep", photo: fourthYearRepresentative },
+  { role: "Third Year Representative", name: "Anna Kendy", initials: "3rd Yr Rep", photo: thirdYearRepresentative },
+  { role: "Second Year Representative", name: "Sharon Akinyi", initials: "2nd Yr Rep", photo: null },
+  {
+    // Two first-year representatives share one card: the photos change by themselves,
+    // and the names show both. Put Stephen's full name in place of "Stephen".
+    role: "First Year Representatives",
+    name: "Gloria Amukuje & Stephen",
+    type: "slideshow",
+    initials: "1st Yr Reps",
+    photos: [firstYearRepresentative, secondFirstYearRepresentative],
+  },
 ];
 
 export default function Committee() {
@@ -46,7 +56,11 @@ export default function Committee() {
             <Reveal key={m.role} delay={i * 0.06}>
               <TiltCard className="overflow-hidden rounded-sm border border-ink/10 bg-lab-50/50 dark:border-dark-border dark:bg-dark-surface/40">
                 <div className="flex aspect-square items-center justify-center bg-lab-800 dark:bg-lab-700">
-                  {m.photo ? (
+                  {m.type === "slideshow" && m.photos && m.photos.length > 0 ? (
+                    <div className="relative h-full w-full">
+                      <Slideshow photos={m.photos} seed={i} objectPosition="top" />
+                    </div>
+                  ) : m.photo ? (
                     <img
                       src={m.photo}
                       alt={m.name}
